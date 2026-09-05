@@ -97,6 +97,10 @@ jobs:
           # BOM 이 있으면 업데이터가 읽지 못한다
           $json | ConvertTo-Json -Depth 6 | Set-Content "$out/latest.json" -Encoding utf8NoBOM
 
+          # 직접 내려받은 파일이 온전한지 확인할 수 있도록 체크섬을 함께 올린다
+          $hash = (Get-FileHash "$out/$name" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name" | Set-Content "$out/SHA256SUMS.txt" -Encoding utf8NoBOM
+
           Write-Host "만들어진 파일:"
           Get-ChildItem $out | ForEach-Object { Write-Host "  $($_.Name)  $($_.Length) bytes" }
 
@@ -117,7 +121,20 @@ jobs:
 
           이미 쓰고 계신 분은 프로그램 안에서
           **설정 → 프로그램 업데이트 → [업데이트 확인]** 을 누르면 바로 받을 수 있습니다.
-          자료는 그대로 남습니다.
+
+          ## 자료는 그대로 남습니다
+
+          자료는 프로그램과 따로 ``%APPDATA%\kr.school.bogyeol`` 에 있습니다.
+          업데이트해도, 프로그램을 지웠다 다시 깔아도 그대로입니다.
+
+          ## 첨부 파일
+
+          | 파일 | 무엇인가요 |
+          |---|---|
+          | ``bogyeol_….exe`` | 설치 파일. 이것만 받으면 됩니다 |
+          | ``bogyeol_….exe.sig`` | 서명. 프로그램이 업데이트할 때 확인합니다 |
+          | ``latest.json`` | 업데이트 정보. 프로그램이 읽습니다 |
+          | ``SHA256SUMS.txt`` | 내려받은 파일이 온전한지 확인용 |
           "@
 
           # 같은 태그로 다시 돌릴 때를 대비해, 있으면 지우고 새로 만든다
