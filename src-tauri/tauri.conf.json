@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "보결 배정 시스템",
   "mainBinaryName": "bogyeol",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "kr.school.bogyeol",
   "build": {
     "beforeDevCommand": "npm run dev",
