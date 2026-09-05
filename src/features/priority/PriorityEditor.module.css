@@ -1,0 +1,248 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.center {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- 요약 ---------- */
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--sky-50);
+  border: 1px solid var(--sky-100);
+  border-radius: var(--radius-btn);
+}
+
+.summaryLabel {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--sky-700);
+}
+
+.summaryList {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.summaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 4px;
+  border-radius: var(--radius-full);
+  background: var(--white);
+  border: 1px solid var(--sky-200);
+  font-size: var(--fs-xs);
+  color: var(--gray-700);
+  font-weight: 600;
+}
+
+.summaryNo {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--sky-500);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.summaryEmpty {
+  font-size: var(--fs-xs);
+  color: var(--warn);
+}
+
+/* ---------- 목록 ---------- */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  cursor: grab;
+}
+
+.itemOn {
+  border-color: var(--sky-200);
+  background: var(--white);
+}
+
+.itemOff {
+  background: var(--gray-50);
+}
+
+.itemDrag {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.handle {
+  color: var(--gray-300);
+  font-size: 12px;
+  letter-spacing: -2px;
+  user-select: none;
+  flex: 0 0 14px;
+}
+
+.no {
+  flex: 0 0 66px;
+  padding: 2px 0;
+  text-align: center;
+  border-radius: var(--radius-full);
+  background: var(--sky-500);
+  color: var(--white);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.noOff {
+  background: var(--gray-200);
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+.main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.check {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  accent-color: var(--sky-500);
+  cursor: pointer;
+  flex: 0 0 17px;
+}
+
+.main > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.itemOff .label {
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  line-height: 1.5;
+}
+
+.arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 0 0 22px;
+}
+
+.arrow {
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--gray-400);
+  font-size: 9px;
+  line-height: 1;
+  padding: 0;
+  border-radius: 3px;
+}
+
+.arrow:hover:not(:disabled) {
+  background: var(--sky-50);
+  color: var(--sky-600);
+}
+
+.arrow:disabled {
+  color: var(--gray-200);
+  cursor: not-allowed;
+}
+
+/* ---------- 바닥 ---------- */
+
+.tieBreak {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.65;
+  padding: var(--sp-3);
+  background: var(--gray-50);
+  border-radius: var(--radius-btn);
+}
+
+.tieBreak strong {
+  color: var(--gray-700);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.footLeft {
+  font-size: var(--fs-xs);
+}
+
+.footRight {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.savedMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--lime-700);
+  font-weight: 600;
+}
+
+.dirtyMark {
+  color: var(--warn);
+}
+
+.defaultMark {
+  color: var(--gray-400);
+}

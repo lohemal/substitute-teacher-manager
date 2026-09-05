@@ -1,0 +1,209 @@
+.loading {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-2) var(--sp-5);
+}
+
+/* ---------- 입력 요소 ---------- */
+
+.input {
+  width: 100%;
+  max-width: 340px;
+  height: 40px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.inputYear {
+  width: 100px;
+  max-width: 100px;
+  text-align: center;
+}
+
+.select {
+  height: 40px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.tilde {
+  color: var(--gray-400);
+}
+
+.unit {
+  font-size: var(--fs-sm);
+  color: var(--gray-600);
+}
+
+.warnText {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--warn);
+}
+
+/* ---------- 칩 ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chip {
+  min-width: 44px;
+  height: 38px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border-strong);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.chip:hover {
+  border-color: var(--sky-300);
+}
+
+.chipOn,
+.chipOn:hover {
+  background: var(--sky-50);
+  border-color: var(--sky-400);
+  color: var(--sky-700);
+}
+
+/* ---------- 학년별 반 수 ---------- */
+
+.classHead {
+  padding: var(--sp-4) 0 var(--sp-2);
+}
+
+.classTitle {
+  font-size: var(--fs-md);
+}
+
+.classDesc {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.gradeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0 var(--sp-5);
+}
+
+.gradeCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--gray-50);
+}
+
+.gradeName {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+  min-width: 44px;
+}
+
+.gradeUnit {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.counterBtn {
+  width: 32px;
+  height: 34px;
+  border: none;
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-md);
+  line-height: 1;
+}
+
+.counterBtn:hover:not(:disabled) {
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+.counterBtn:disabled {
+  color: var(--gray-300);
+  cursor: not-allowed;
+}
+
+.counterInput {
+  width: 42px;
+  height: 34px;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  text-align: center;
+  font-weight: 700;
+  color: var(--gray-800);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.counterInput::-webkit-outer-spin-button,
+.counterInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.counterInput:focus {
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+  background: var(--sky-50);
+}

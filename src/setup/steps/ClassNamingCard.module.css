@@ -1,0 +1,247 @@
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--fs-md);
+}
+
+.desc {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 44ch;
+}
+
+/* ---------- 방식 선택 ---------- */
+
+.modeChips {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.modeChip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  text-align: left;
+}
+
+.modeChip:hover {
+  border-color: var(--sky-300);
+}
+
+.modeChipOn,
+.modeChipOn:hover {
+  background: var(--sky-50);
+  border-color: var(--sky-400);
+}
+
+.modeName {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.modeChipOn .modeName {
+  color: var(--sky-700);
+}
+
+.modeEx {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+/* ---------- 이름 입력 ---------- */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--gray-100);
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ordinal {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-weight: 600;
+  padding-left: 2px;
+}
+
+.nameInput {
+  width: 92px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.perGradeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+}
+
+.perGradeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.gradeName {
+  min-width: 52px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+.switch input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--sky-500);
+  cursor: pointer;
+}
+
+/* ---------- 미리보기 ---------- */
+
+.preview {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--sky-50);
+  border: 1px solid var(--sky-100);
+  border-radius: var(--radius-btn);
+}
+
+.previewLabel {
+  flex: 0 0 auto;
+  padding-top: 3px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--sky-700);
+}
+
+.previewList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.previewRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.previewChip {
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  background: var(--white);
+  border: 1px solid var(--sky-200);
+  color: var(--sky-700);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.previewChipEmpty {
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  background: var(--white);
+  border: 1px dashed var(--warn);
+  color: var(--warn);
+  font-size: var(--fs-xs);
+}
+
+.previewMore {
+  color: var(--sky-500);
+  font-size: var(--fs-xs);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  line-height: 1.6;
+}
+
+/* ---------- 학년별 반 수 ---------- */
+
+.countCell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--gray-50);
+}
+
+.countGrade {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+  min-width: 44px;
+}
+
+.countUnit {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}

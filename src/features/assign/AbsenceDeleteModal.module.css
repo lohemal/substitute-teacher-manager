@@ -1,0 +1,28 @@
+.ask {
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-md);
+  line-height: var(--lh-base);
+  color: var(--text);
+}
+
+.ask strong {
+  color: var(--sky-700);
+}
+
+.detail {
+  margin: 0 4px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.warnBody {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+}
+
+.note {
+  margin-top: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}

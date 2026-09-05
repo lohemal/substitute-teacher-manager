@@ -1,0 +1,299 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.req {
+  font-weight: 400;
+  color: var(--sky-700);
+  font-size: var(--fs-xs);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  line-height: 1.55;
+}
+
+.input {
+  height: 40px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+}
+
+.inputSmall {
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  font-size: var(--fs-sm);
+}
+
+.input:focus,
+.inputSmall:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+/* ---------- 구분 ---------- */
+
+.roleChips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.roleChip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 10px var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+}
+
+.roleChip:hover {
+  border-color: var(--sky-300);
+}
+
+.roleChipOn,
+.roleChipOn:hover {
+  background: var(--sky-50);
+  border-color: var(--sky-400);
+}
+
+.roleName {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.roleChipOn .roleName {
+  color: var(--sky-700);
+}
+
+.roleHint {
+  font-size: 11px;
+  color: var(--gray-400);
+  line-height: 1.4;
+}
+
+/* ---------- 학급 ---------- */
+
+.classGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-3);
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.classGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.gradeName {
+  min-width: 48px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--gray-600);
+}
+
+.classChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.classChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.classChip:hover {
+  border-color: var(--sky-300);
+}
+
+.classChipOn,
+.classChipOn:hover {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  color: var(--white);
+}
+
+.taken {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gray-400);
+}
+
+/* ---------- 과목 ---------- */
+
+.subjectChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.subjectChip {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+}
+
+.subjectChip:hover {
+  border-color: var(--lime-400);
+}
+
+.subjectChipOn,
+.subjectChipOn:hover {
+  background: var(--lime-500);
+  border-color: var(--lime-500);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.addSubject {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+/* ---------- 보결 대상 ---------- */
+
+.switchRow {
+  padding: var(--sp-4);
+  border: 1px solid var(--lime-200);
+  background: var(--lime-50);
+  border-radius: var(--radius-btn);
+}
+
+.switch {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  cursor: pointer;
+}
+
+.switch input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--lime-600);
+  cursor: pointer;
+}
+
+.switch > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--fs-sm);
+  color: var(--gray-800);
+}
+
+.switchHint {
+  font-size: var(--fs-xs);
+  color: var(--gray-500);
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+/* ---------- 바닥 ---------- */
+
+.footLeft,
+.footRight {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.subtleBtn {
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.subtleBtn:hover:not(:disabled) {
+  background: var(--gray-100);
+}
+
+.dangerLink {
+  border: none;
+  background: none;
+  color: var(--gray-400);
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dangerLink:hover {
+  color: var(--danger);
+}
+
+.confirmRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.confirmText {
+  font-size: var(--fs-xs);
+  color: var(--gray-600);
+}
+
+.confirmYes {
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-btn);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.replaceActions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}

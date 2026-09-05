@@ -1,0 +1,30 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.DS_Store
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# 개발용 로컬 DB
+*.db
+*.db-shm
+*.db-wal
+
+# 업데이터 서명 키 (절대 커밋 금지)
+*.key
+.tauri/
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# 서명 키 폴더 (혹시 프로젝트 안으로 옮겨도 막히도록)
+.bogyeol-release/
+*.key.pub
+
+# 내보낸 CSV / 백업
+exports/
+backups/

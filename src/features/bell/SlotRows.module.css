@@ -1,0 +1,167 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.empty {
+  padding: var(--sp-5) var(--sp-3);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 7px var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+}
+
+/* 점심시간은 일반 교시와 확실히 구분한다 */
+.rowLunch {
+  background: var(--lime-50);
+  border-color: var(--lime-200);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 66px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.rowLunch .label {
+  color: var(--lime-700);
+}
+
+.lunchDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--lime-500);
+}
+
+.tilde {
+  color: var(--gray-400);
+}
+
+.duration {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  font-variant-numeric: tabular-nums;
+}
+
+.del {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gray-400);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.del:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.delSpacer {
+  width: 28px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.addBtn:hover {
+  border-color: var(--sky-400);
+  color: var(--sky-700);
+  background: var(--sky-50);
+}
+
+/* 중간놀이 등 기타 시간 구간 — 점심(연두)과도 구분되도록 하늘색 계열 */
+.rowOther {
+  background: var(--sky-50);
+  border-color: var(--sky-200);
+}
+
+.nameInput {
+  width: 90px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--sky-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--sky-700);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+/* 점심·중간놀이 순서 이동 */
+.moveCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 20px;
+  flex: 0 0 20px;
+}
+
+.moveBtn {
+  height: 15px;
+  border: none;
+  background: transparent;
+  color: var(--gray-400);
+  font-size: 9px;
+  line-height: 1;
+  padding: 0;
+  border-radius: 3px;
+}
+
+.moveBtn:hover:not(:disabled) {
+  background: var(--white);
+  color: var(--sky-600);
+}
+
+.moveBtn:disabled {
+  color: var(--gray-200);
+  cursor: not-allowed;
+}
+
+.hint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  line-height: 1.6;
+}

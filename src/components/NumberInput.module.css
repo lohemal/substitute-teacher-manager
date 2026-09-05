@@ -1,0 +1,28 @@
+.input {
+  width: 58px;
+  height: 34px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--gray-800);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--sky-300);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.input:disabled {
+  background: var(--gray-50);
+  color: var(--gray-400);
+}

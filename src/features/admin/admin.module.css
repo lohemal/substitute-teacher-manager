@@ -1,0 +1,507 @@
+.muted {
+  color: var(--text-muted);
+}
+
+.hint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+
+.linkBtn {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--sky-700);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inlineBtn {
+  margin-left: 10px;
+}
+
+.detail {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+}
+
+.detail pre {
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  background: var(--gray-100);
+  overflow-x: auto;
+}
+
+/* ---------- 카드 아래 ---------- */
+
+.footRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.footNote {
+  margin-right: auto;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.footBtns {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* ---------- 옵션 목록 ---------- */
+
+.optList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+}
+
+.optItem {
+  border-radius: var(--r-sm);
+}
+
+.optItem:hover {
+  background: var(--gray-50);
+}
+
+.optLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.optLabel input {
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+  flex: none;
+  accent-color: var(--sky-500);
+}
+
+.optTitle {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.optChanged {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--sky-50);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--sky-700);
+}
+
+.optHint {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+
+/* 설정으로 끌 수 없는 것 */
+.fixed {
+  margin-top: var(--sp-4);
+  padding: 12px 14px;
+  border-left: 3px solid var(--border-strong);
+  background: var(--gray-50);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+
+.fixed strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text);
+}
+
+/* ---------- 작은 구역 ---------- */
+
+.block {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.blockTitle {
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.rowLabel {
+  min-width: 74px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.segment {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.seg {
+  padding: 7px 16px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--sky-500);
+  color: #fff;
+}
+
+.seg:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+/* ---------- 표 ---------- */
+
+.tableWrap {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--gray-50);
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rowBad {
+  background: var(--danger-soft);
+}
+
+.rowNow {
+  background: var(--sky-50);
+}
+
+.numCol {
+  width: 92px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.kindCol {
+  width: 150px;
+}
+
+.actCol {
+  width: 130px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fileName {
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.problem {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: #b91c1c;
+}
+
+.calc {
+  margin-left: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.nowTag {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--sky-500);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: #fff;
+}
+
+.kindTag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.kind_MANUAL {
+  background: var(--lime-50);
+  color: var(--lime-700);
+}
+
+.kind_AUTO {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.kind_SAFETY {
+  background: var(--warn-soft);
+  color: #92400e;
+}
+
+.kind_UPGRADE {
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+.smallBtn {
+  margin-left: 5px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.smallBtn:hover:not(:disabled) {
+  border-color: var(--sky-500);
+  color: var(--sky-700);
+}
+
+.smallBtn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.smallDanger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- 입력 ---------- */
+
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.text,
+.date,
+.pathInput {
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+}
+
+.text {
+  width: 100%;
+}
+
+.pathInput {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+}
+
+.text:focus,
+.date:focus,
+.pathInput:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.pathRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tilde {
+  color: var(--text-muted);
+}
+
+.phrase {
+  padding: 1px 7px;
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.ask {
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-md);
+  line-height: var(--lh-base);
+}
+
+.sub {
+  margin-left: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.warnBody {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+}
+
+.stepList {
+  margin: 6px 0 0 18px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+}
+
+.dangerRow {
+  margin-top: var(--sp-4);
+}
+
+/* ---------- 경로 목록 ---------- */
+
+.dl {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  row-gap: 12px;
+  align-items: baseline;
+}
+
+.dl dt {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.dl dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.path {
+  font-family: var(--font-num);
+  font-size: var(--fs-sm);
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ---------- CSV 내보내기 ---------- */
+
+.exportWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exportOk {
+  font-size: var(--fs-sm);
+  color: var(--lime-700);
+}
+
+.exportBad {
+  font-size: var(--fs-sm);
+  color: var(--danger);
+}
+
+/* ---------- 업데이트 ---------- */
+
+.notes {
+  margin: var(--sp-3) 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--gray-50);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text);
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.bar {
+  height: 10px;
+  margin: var(--sp-3) 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--sky-500);
+  transition: width 0.2s ease;
+}

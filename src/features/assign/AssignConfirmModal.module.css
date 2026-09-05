@@ -1,0 +1,105 @@
+.errText {
+  margin-top: 4px;
+  line-height: var(--lh-base);
+  white-space: pre-line;
+}
+
+.detail {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+}
+
+.detail pre {
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  background: var(--gray-100);
+  overflow-x: auto;
+}
+
+/* ---------- 확인 안내 (전담 시간 등) ---------- */
+
+.notice {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--warn);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+}
+
+.noticeTitle {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: #92400e;
+}
+
+.noticeBody {
+  margin-top: 4px;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text);
+}
+
+/* ---------- 확인 표 ---------- */
+
+.sheet {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.sheet dt {
+  padding: 11px 14px;
+  background: var(--gray-50);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.sheet dd {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 11px 14px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.none {
+  color: var(--text-faint);
+}
+
+.pick {
+  font-size: var(--fs-md);
+  color: var(--sky-700);
+}
+
+.rank {
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  background: var(--gray-100);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.rank1 {
+  background: var(--lime-100);
+  color: var(--lime-700);
+}
+
+.reason {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}

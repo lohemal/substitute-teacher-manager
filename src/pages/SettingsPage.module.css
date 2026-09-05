@@ -1,0 +1,44 @@
+.dl {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: var(--sp-3) var(--sp-4);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.dl dt {
+  color: var(--text-muted);
+}
+
+.dl dd {
+  margin: 0;
+  color: var(--gray-800);
+  font-weight: 500;
+}
+
+.path {
+  word-break: break-all;
+  font-size: var(--fs-xs);
+  color: var(--gray-600);
+  font-weight: 400;
+}
+
+.warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.todo {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}

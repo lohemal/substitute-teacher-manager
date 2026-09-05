@@ -1,0 +1,230 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+/* ---------- 학급 ---------- */
+
+.classGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--sp-3);
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.classGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.gradeName {
+  min-width: 48px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--gray-600);
+}
+
+.classChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.classChip {
+  min-width: 46px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.classChip:hover {
+  border-color: var(--sky-300);
+}
+
+.classChipOn,
+.classChipOn:hover {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  color: var(--white);
+}
+
+.timeHint {
+  font-size: var(--fs-xs);
+  color: var(--sky-700);
+}
+
+.timeHint strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 과목 ---------- */
+
+.subjectChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.subjectChip {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-sm);
+}
+
+.subjectChip:hover {
+  border-color: var(--lime-400);
+}
+
+.subjectChipOther {
+  color: var(--gray-400);
+  border-style: dashed;
+}
+
+.subjectChipOn,
+.subjectChipOn:hover {
+  background: var(--lime-500);
+  border-color: var(--lime-500);
+  border-style: solid;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+/* ---------- 수업 구분 ---------- */
+
+.moreLink {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--sky-700);
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.typeRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 9px var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+}
+
+.typeRow:hover {
+  border-color: var(--sky-300);
+}
+
+.typeRowOn,
+.typeRowOn:hover {
+  background: var(--sky-50);
+  border-color: var(--sky-400);
+}
+
+.typeName {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.typeRowOn .typeName {
+  color: var(--sky-700);
+}
+
+.typeHint {
+  font-size: 11px;
+  color: var(--gray-400);
+  line-height: 1.45;
+}
+
+/* ---------- 바닥 ---------- */
+
+.footLeft,
+.footRight {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.deleteLink {
+  border: none;
+  background: none;
+  color: var(--gray-400);
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.deleteLink:hover {
+  color: var(--danger);
+}
+
+.confirmRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.confirmText {
+  font-size: var(--fs-xs);
+  color: var(--gray-600);
+}
+
+.confirmYes {
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-btn);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.subtleBtn {
+  height: 34px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  color: var(--gray-600);
+  font-size: var(--fs-xs);
+}

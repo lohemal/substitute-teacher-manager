@@ -1,0 +1,134 @@
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.gradeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  background: var(--gray-50);
+}
+
+.gradeName {
+  min-width: 52px;
+  padding-top: 8px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 4px 4px 4px 10px;
+}
+
+.classNo {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.nameInput {
+  width: 96px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: var(--fs-sm);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.allDone {
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--lime-700);
+  font-size: var(--fs-sm);
+  background: var(--lime-50);
+  border: 1px solid var(--lime-200);
+  border-radius: var(--radius-btn);
+}
+
+.problems {
+  margin: 6px 0 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.already {
+  font-size: var(--fs-sm);
+  color: var(--gray-600);
+}
+
+.already summary {
+  cursor: pointer;
+  color: var(--sky-700);
+  font-size: var(--fs-xs);
+}
+
+.alreadyList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.alreadyItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  color: var(--gray-600);
+}
+
+.alreadyItem strong {
+  color: var(--gray-800);
+}
+
+.inactive {
+  color: var(--warn);
+}
+
+.alreadyHint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+}
+
+.footInfo {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.footRight {
+  display: flex;
+  gap: var(--sp-2);
+}

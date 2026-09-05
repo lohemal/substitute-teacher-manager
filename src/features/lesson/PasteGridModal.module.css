@@ -1,0 +1,142 @@
+.taLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.sampleBtn {
+  border: none;
+  background: none;
+  color: var(--sky-700);
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 400;
+}
+
+.textarea {
+  width: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-btn);
+  background: var(--white);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  resize: vertical;
+  tab-size: 10;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 3px var(--sky-100);
+}
+
+.hint {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  line-height: 1.65;
+}
+
+.list {
+  margin: 6px 0 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.previewTitle {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--gray-700);
+}
+
+.previewWarn {
+  color: var(--warn);
+  font-size: var(--fs-xs);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--border);
+  padding: 7px 9px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table thead th {
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+}
+
+.corner {
+  background: var(--gray-50) !important;
+  color: var(--gray-500) !important;
+}
+
+.rowHead {
+  background: var(--gray-50);
+  color: var(--gray-700);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+}
+
+.empty {
+  color: var(--gray-300);
+}
+
+.goodCell {
+  background: var(--lime-50);
+}
+
+.cellClass {
+  display: block;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.cellSubject {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--lime-700);
+}
+
+.badCell {
+  background: var(--warn-soft);
+  color: #92400E;
+  font-size: var(--fs-xs);
+  text-decoration: line-through;
+}
+
+.footInfo {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.footRight {
+  display: flex;
+  gap: var(--sp-2);
+}

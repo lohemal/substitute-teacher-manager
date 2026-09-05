@@ -1,0 +1,375 @@
+.center {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.errText {
+  margin-top: 4px;
+  line-height: var(--lh-base);
+  white-space: pre-line;
+}
+
+.detail {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+}
+
+.detail pre {
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  background: var(--gray-100);
+  overflow-x: auto;
+}
+
+.infoLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: var(--sp-3);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--sky-50);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--sky-700);
+}
+
+.infoDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sky-500);
+}
+
+/* ---------- 표 ---------- */
+
+.tableWrap {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--gray-50);
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rowDone {
+  background: var(--gray-50);
+}
+
+.timeCol {
+  width: 132px;
+  white-space: nowrap;
+}
+
+.targetCol {
+  width: 210px;
+}
+
+.pickCol {
+  min-width: 260px;
+}
+
+.stateCol {
+  width: 96px;
+  white-space: nowrap;
+}
+
+/* ---------- 칸 안 ---------- */
+
+.slotLabel {
+  display: block;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.time {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.cls {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.kind {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.noticeTag {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  font-size: var(--fs-xs);
+  color: #92400e;
+  cursor: help;
+}
+
+.topName {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topReason {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.none {
+  color: var(--danger);
+}
+
+.doneName {
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.select {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.select:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.select:disabled {
+  background: var(--gray-100);
+  color: var(--text-faint);
+}
+
+.pickWhy {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* ---------- 상태 ---------- */
+
+.state {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.state_DONE {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.state_PLANNED {
+  background: var(--lime-100);
+  color: var(--lime-700);
+}
+
+.state_EMPTY {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.state_BLOCKED {
+  background: var(--danger-soft);
+  color: #b91c1c;
+}
+
+/* ---------- 아래 ---------- */
+
+.foot {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+
+.footInfo {
+  margin-right: auto;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.footInfo strong {
+  color: var(--sky-700);
+}
+
+.footRest {
+  margin-left: 4px;
+  color: var(--text-faint);
+}
+
+.footBtns {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+/* ---------- 날짜 · 대상 ---------- */
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--sp-4);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.headLabel {
+  flex: none;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.dateBox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dateInput {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.dateInput:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.stepBtn {
+  width: 30px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.stepBtn:hover {
+  border-color: var(--sky-300);
+  color: var(--sky-700);
+}
+
+.weekday {
+  margin-left: 2px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--sky-700);
+}
+
+.targetSelect {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.targetSelect:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.absenceTag {
+  flex: none;
+  padding: 4px 11px;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius-full);
+  background: var(--warn-soft);
+  font-size: var(--fs-sm);
+  color: #92400e;
+}
+
+/* ---------- 중복 · 겹침 표시 ---------- */
+
+.dupTag,
+.clashTag {
+  display: block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 연한 빨강 — 막지는 않고 확인만 요청한다 */
+.dupTag {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  cursor: help;
+}
+
+/* 진한 빨강 — 저장할 수 없다 */
+.clashTag {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}

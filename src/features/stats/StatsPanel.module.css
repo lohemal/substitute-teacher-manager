@@ -1,0 +1,584 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.center,
+.empty {
+  padding: var(--sp-6);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.head {
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.headRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.headRow .head {
+  margin-bottom: 0;
+}
+
+.headNote {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+.linkBtn {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--sky-700);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.note {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--text-muted);
+}
+
+/* ---------- 기간 ---------- */
+
+.periodBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.segment {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.seg {
+  padding: 7px 16px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--sky-500);
+  color: #fff;
+}
+
+.range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.tilde {
+  color: var(--text-faint);
+}
+
+.rangeLabel {
+  margin-left: auto;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--sky-700);
+}
+
+/* ---------- 요약 카드 ---------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--sp-3);
+}
+
+.card {
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.cardLabel {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.cardValue {
+  margin-top: 4px;
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.cardUnit {
+  margin-left: 3px;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cardSub {
+  margin-top: 5px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.card_ok {
+  border-color: var(--lime-200);
+  background: var(--lime-50);
+}
+
+.card_ok .cardValue {
+  color: var(--lime-700);
+}
+
+/* 미배정 — 가장 눈에 띄어야 한다 */
+.card_alert {
+  border: 2px solid var(--danger);
+  background: var(--danger-soft);
+}
+
+.card_alert .cardLabel,
+.card_alert .cardSub {
+  color: #b91c1c;
+}
+
+.card_alert .cardValue {
+  color: #b91c1c;
+}
+
+.cardBig .cardValue {
+  font-size: 34px;
+}
+
+/* ---------- 미배정 목록 ---------- */
+
+.openBox {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--danger);
+  border-left-width: 4px;
+  border-radius: var(--radius-card);
+  background: var(--danger-soft);
+}
+
+.openHead {
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: #b91c1c;
+}
+
+.openList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+}
+
+.openItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+}
+
+.openDate {
+  min-width: 74px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.openCls {
+  min-width: 62px;
+  font-weight: 600;
+  color: var(--sky-700);
+}
+
+.openSlot {
+  min-width: 52px;
+}
+
+.openTime {
+  min-width: 106px;
+  color: var(--text-muted);
+}
+
+.openWho {
+  color: var(--text-muted);
+}
+
+.openKind {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.openMore {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  color: #b91c1c;
+}
+
+/* ---------- 표 ---------- */
+
+.tableCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--gray-50);
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.numCol {
+  width: 76px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 고른 기간에 해당하는 열을 강조한다 */
+.colOn {
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 700;
+}
+
+.totalCol {
+  border-left: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.roleCol {
+  width: 74px;
+}
+
+.bandCol {
+  width: 128px;
+}
+
+.dateCol {
+  width: 138px;
+  white-space: nowrap;
+}
+
+.name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.duty {
+  color: var(--text-muted);
+}
+
+.day {
+  margin-left: 6px;
+  color: var(--text-faint);
+}
+
+.rowOff {
+  color: var(--text-faint);
+}
+
+.rowOff .name {
+  color: var(--text-muted);
+}
+
+/* 미배정이 남은 날 */
+.rowOpen {
+  background: var(--danger-soft);
+}
+
+.openMark {
+  display: inline-block;
+  min-width: 26px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  font-family: var(--font-num);
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.tag {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--gray-200);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+.roleTag {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.role_HOMEROOM {
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+.role_SPECIAL {
+  background: var(--lime-50);
+  color: var(--lime-700);
+}
+
+.role_OTHER {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+/* ---------- 참고 표시 ---------- */
+
+.band {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+/* 평가가 아니라 참고이므로 경고색을 쓰지 않는다 */
+.bandMore {
+  border: 1px solid var(--sky-300);
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+.bandTypical {
+  border: 1px solid var(--line);
+  background: var(--gray-50);
+  color: var(--gray-600);
+}
+
+.bandLess {
+  border: 1px solid var(--gray-300);
+  background: var(--surface);
+  color: var(--gray-600);
+}
+
+.bandNone {
+  display: none;
+}
+
+/* ---------- 구분별 분포 ---------- */
+
+.spreadRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-3);
+}
+
+.spread {
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.spreadTitle {
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.spreadPeople {
+  margin-left: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.spreadList {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  row-gap: 6px;
+  font-size: var(--fs-sm);
+}
+
+.spreadList dt {
+  color: var(--text-muted);
+}
+
+.spreadList dd {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text);
+}
+
+.spreadWho {
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.spreadNone {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+/* ---------- 정렬 ---------- */
+
+.sortBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.sortHint {
+  color: var(--text-faint);
+}
+
+.sortChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sortChip {
+  padding: 2px 9px;
+  border: 1px solid var(--sky-300);
+  border-radius: var(--radius-full);
+  background: var(--sky-50);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--sky-700);
+}
+
+.sortTh {
+  padding: 0 !important;
+}
+
+.sortBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sortBtn:hover {
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+/* 숫자 열은 오른쪽 정렬이므로 머리글도 오른쪽으로 */
+.numCol .sortBtn,
+.bandCol .sortBtn {
+  justify-content: flex-end;
+}
+
+.numCol .sortBtn {
+  flex-direction: row-reverse;
+}
+
+.sortMark {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.sortOn .sortMark {
+  color: var(--sky-500);
+}
+
+.sortOn .sortBtn {
+  color: var(--sky-700);
+}
+
+.sortRank {
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: var(--radius-full);
+  background: var(--sky-500);
+  font-family: var(--font-num);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  color: #fff;
+  text-align: center;
+}

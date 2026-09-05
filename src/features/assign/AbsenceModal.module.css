@@ -1,0 +1,114 @@
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.select,
+.text {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  color: var(--text);
+}
+
+.select:focus,
+.text:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+/* ---------- 종일 / 일부 시간 ---------- */
+
+.segment {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.seg {
+  padding: 7px 20px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--sky-500);
+  color: #fff;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.tilde {
+  color: var(--text-faint);
+}
+
+.hint {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+}
+
+.bad {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  color: var(--danger);
+}
+
+/* ---------- 사유 ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--sky-300);
+}
+
+.chipOn {
+  border-color: var(--sky-500);
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 600;
+}

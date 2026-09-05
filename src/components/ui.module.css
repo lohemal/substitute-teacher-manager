@@ -1,0 +1,245 @@
+/* ---------- Page ---------- */
+
+.page {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-8) var(--sp-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.pageHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.pageTitle {
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
+}
+
+.pageDesc {
+  margin-top: var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.pageActions {
+  display: flex;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+/* ---------- Card ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.cardTitle {
+  font-size: var(--fs-md);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+  color: var(--gray-800);
+}
+
+/* ---------- 접었다 펴는 카드 ---------- */
+
+.cardHead {
+  font-size: var(--fs-md);
+}
+
+.cardOpen .cardHead {
+  border-bottom: 1px solid var(--border);
+}
+
+.cardToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cardToggle:hover {
+  background: var(--gray-50);
+}
+
+.cardToggle:focus-visible {
+  outline: 2px solid var(--sky-300);
+  outline-offset: -2px;
+}
+
+.cardMark {
+  display: flex;
+  flex: none;
+  color: var(--gray-400);
+  transition: transform 0.12s ease;
+}
+
+.cardMarkOpen {
+  transform: rotate(90deg);
+  color: var(--sky-500);
+}
+
+.cardHeadText {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cardHeadTitle {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.cardHeadSub {
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.cardBody {
+  padding: var(--sp-5);
+}
+
+.cardFoot {
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--border);
+  background: var(--gray-50);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+/* ---------- Button ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 40px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-btn);
+  border: 1px solid transparent;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn_primary {
+  background: var(--sky-500);
+  color: var(--white);
+}
+.btn_primary:not(:disabled):hover { background: var(--sky-600); }
+
+.btn_accent {
+  background: var(--lime-500);
+  color: var(--white);
+}
+.btn_accent:not(:disabled):hover { background: var(--lime-600); }
+
+.btn_ghost {
+  background: var(--white);
+  color: var(--gray-700);
+  border-color: var(--border-strong);
+}
+.btn_ghost:not(:disabled):hover { background: var(--gray-50); }
+
+.btn_danger {
+  background: var(--white);
+  color: var(--danger);
+  border-color: #FECACA;
+}
+.btn_danger:not(:disabled):hover { background: var(--danger-soft); }
+
+/* ---------- EmptyState ---------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-2);
+  padding: var(--sp-10) var(--sp-6);
+}
+
+.emptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--sky-50);
+  color: var(--sky-500);
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--sp-2);
+}
+
+.emptyTitle {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.emptyDesc {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  max-width: 44ch;
+  line-height: var(--lh-base);
+}
+
+.emptyAction {
+  margin-top: var(--sp-4);
+}
+
+/* ---------- Notice ---------- */
+
+.notice {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-btn);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  border: 1px solid;
+}
+
+.notice_info {
+  background: var(--sky-50);
+  border-color: var(--sky-100);
+  color: var(--sky-700);
+}
+
+.notice_warn {
+  background: var(--warn-soft);
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+.notice_danger {
+  background: var(--danger-soft);
+  border-color: #FECACA;
+  color: #991B1B;
+}

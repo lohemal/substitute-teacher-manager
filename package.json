@@ -1,0 +1,34 @@
+{
+  "name": "bogyeol",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app": "tauri dev",
+    "app:build": "tauri build",
+    "check:model": "node --experimental-strip-types --no-warnings scripts/check-bell-model.ts && node --experimental-strip-types --no-warnings scripts/check-roster-parse.ts && node --experimental-strip-types --no-warnings scripts/check-class-label.ts && node --experimental-strip-types --no-warnings scripts/check-lesson-grid.ts && node --experimental-strip-types --no-warnings scripts/check-plan-picks.ts && node --experimental-strip-types --no-warnings scripts/check-sort-teachers.ts",
+    "version:set": "node scripts/set-version.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.7",
+    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.11.0",
+    "dayjs": "^1.11.13",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
+}

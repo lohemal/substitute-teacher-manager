@@ -1,0 +1,355 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.center {
+  padding: var(--sp-8);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ---------- 거르기 ---------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.field {
+  display: block;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date,
+.text {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.text {
+  width: 220px;
+}
+
+.date:focus,
+.text:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.tilde {
+  color: var(--text-faint);
+}
+
+.quick {
+  display: flex;
+  gap: 6px;
+  padding-bottom: 1px;
+}
+
+.quickBtn {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.quickBtn:hover {
+  border-color: var(--sky-300);
+  color: var(--sky-700);
+}
+
+.segment {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+}
+
+.seg {
+  padding: 6px 16px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.segOn {
+  background: var(--sky-500);
+  color: #fff;
+}
+
+/* ---------- 요약 ---------- */
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.summary strong {
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+
+.ok {
+  color: var(--lime-700) !important;
+}
+
+.sep {
+  color: var(--text-faint);
+}
+
+.more {
+  margin-left: 8px;
+  color: var(--warn);
+}
+
+/* ---------- 표 ---------- */
+
+.emptyCard,
+.tableCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.tableCard {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--gray-50);
+  text-align: left;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* 취소된 기록은 한눈에 구분된다 */
+.rowDead {
+  background: var(--gray-50);
+  color: var(--text-muted);
+}
+
+.rowDead .subName {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.dateCol {
+  width: 132px;
+  white-space: nowrap;
+}
+
+.clsCol {
+  width: 92px;
+  font-weight: 600;
+}
+
+.slotCol {
+  width: 96px;
+  white-space: nowrap;
+}
+
+.timeCol {
+  width: 122px;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.stateCol {
+  width: 130px;
+}
+
+.actCol {
+  width: 68px;
+  text-align: right;
+}
+
+.day {
+  margin-left: 5px;
+  color: var(--text-faint);
+}
+
+.subject {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.none {
+  color: var(--text-faint);
+}
+
+.reason {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.subName {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rank {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.state {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--lime-100);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--lime-700);
+}
+
+.stateDead {
+  background: var(--gray-200);
+  color: var(--gray-600);
+}
+
+.cancelWhy {
+  display: block;
+  margin-top: 3px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}
+
+.cancelBtn {
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- 취소 확인 ---------- */
+
+.sheet {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 1px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.sheet dt {
+  padding: 10px 13px;
+  background: var(--gray-50);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.sheet dd {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 13px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.full {
+  width: 100%;
+}
+
+.gapTop {
+  margin-top: 8px;
+}
+
+.exportSlot {
+  margin-left: auto;
+}

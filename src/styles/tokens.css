@@ -1,0 +1,112 @@
+/* ============================================================
+   디자인 토큰 — 하늘색(Primary) + 연두색(Accent) + 흰색
+   ============================================================ */
+
+:root {
+  /* Primary — 하늘색 */
+  --sky-50:  #F0F9FF;
+  --sky-100: #E0F2FE;
+  --sky-200: #BAE6FD;
+  --sky-300: #7DD3FC;
+  --sky-400: #38BDF8;
+  --sky-500: #0EA5E9;
+  --sky-600: #0284C7;
+  --sky-700: #0369A1;
+
+  /* Accent — 연두색 (성공 / 배정 가능 / 1순위 추천) */
+  --lime-50:  #F7FEE7;
+  --lime-100: #ECFCCB;
+  --lime-200: #D9F99D;
+  --lime-400: #A3E635;
+  --lime-500: #84CC16;
+  --lime-600: #65A30D;
+  --lime-700: #4D7C0F;
+
+  /* Neutral */
+  --white:    #FFFFFF;
+  --gray-50:  #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
+
+  /* Semantic */
+  --primary:        var(--sky-500);
+  --primary-hover:  var(--sky-600);
+  --primary-soft:   var(--sky-50);
+  --primary-border: var(--sky-200);
+
+  --accent:         var(--lime-500);
+  --accent-hover:   var(--lime-600);
+  --accent-soft:    var(--lime-50);
+  --accent-border:  var(--lime-200);
+
+  --bg:             var(--white);
+  --bg-subtle:      var(--sky-50);
+  --surface:        var(--white);
+  --border:         var(--gray-200);
+  --border-strong:  var(--gray-300);
+
+  --text:           var(--gray-800);
+  --text-muted:     var(--gray-500);
+  --text-invert:    var(--white);
+
+  --warn:           #F59E0B;
+  --warn-soft:      #FFFBEB;
+  --danger:         #EF4444;
+  --danger-soft:    #FEF2F2;
+
+  /* Shape */
+  --radius-sm:   8px;
+  --radius-btn:  10px;
+  --radius-card: 14px;
+  --radius-full: 999px;
+
+  /* 짧은 별칭 — 화면 CSS에서 자주 쓴다 */
+  --line:           var(--border);
+  --line-strong:    var(--border-strong);
+  --surface-sunken: var(--gray-50);
+  --text-faint:     var(--gray-400);
+  --r-sm:  var(--radius-sm);
+  --r-md:  var(--radius-btn);
+  --r-lg:  var(--radius-card);
+
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-pop:  0 8px 24px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+
+  /* Spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  /* Typography — 40~50대 사용자를 고려해 기본 15px, 12px 이하 금지 */
+  --font-sans: 'Pretendard', 'Pretendard Variable', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  --font-num: 'Pretendard', 'Segoe UI', tabular-nums, sans-serif;
+
+  --fs-xs:   13px;
+  --fs-sm:   14px;
+  --fs-base: 15px;
+  --fs-md:   16px;
+  --fs-lg:   18px;
+  --fs-xl:   22px;
+  --fs-2xl:  28px;
+
+  --lh-tight: 1.3;
+  --lh-base:  1.6;
+
+  /* Layout */
+  --sidebar-w: 216px;
+  --header-h:  60px;
+  --content-max: 1180px;
+}

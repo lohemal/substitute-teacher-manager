@@ -1,0 +1,121 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  height: 100%;
+  background: var(--bg-subtle);
+}
+
+/* ---------- 사이드바 ---------- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  padding: var(--sp-4) var(--sp-3);
+  gap: var(--sp-5);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) 0;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 10px;
+  background: var(--sky-500);
+  color: var(--white);
+  display: grid;
+  place-items: center;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brandTitle {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.25;
+}
+
+.brandSub {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 10px var(--sp-3);
+  border-radius: var(--radius-btn);
+  color: var(--gray-600);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.navItem:hover {
+  background: var(--gray-50);
+  color: var(--gray-800);
+}
+
+.navItemActive,
+.navItemActive:hover {
+  background: var(--sky-50);
+  color: var(--sky-700);
+  font-weight: 700;
+}
+
+.sidebarFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-top: 1px solid var(--border);
+}
+
+.termChip {
+  font-size: var(--fs-xs);
+  color: var(--sky-700);
+  background: var(--sky-50);
+  border: 1px solid var(--sky-100);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.version {
+  font-size: var(--fs-xs);
+  color: var(--gray-400);
+  white-space: nowrap;
+}
+
+/* ---------- 본문 ---------- */
+
+.main {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
