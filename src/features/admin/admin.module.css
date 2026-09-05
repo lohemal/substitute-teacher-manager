@@ -505,3 +505,14 @@
   background: var(--sky-500);
   transition: width 0.2s ease;
 }
+
+.stepText {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.barDone {
+  background: var(--lime-500);
+}
