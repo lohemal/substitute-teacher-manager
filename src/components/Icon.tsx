@@ -11,6 +11,7 @@ export type IconName =
   | 'plus'
   | 'chevronRight'
   | 'warning'
+  | 'won'
 
 const PATHS: Record<IconName, ReactElement> = {
   search: (
@@ -57,6 +58,13 @@ const PATHS: Record<IconName, ReactElement> = {
     <>
       <path d="M12 4.5 2.8 20h18.4L12 4.5Z" />
       <path d="M12 10v4.5M12 17.2h.01" />
+    </>
+  ),
+  // 원(₩) — 보결 수당
+  won: (
+    <>
+      <path d="M4 6.5l3.2 11L12 8l4.8 9.5L20 6.5" />
+      <path d="M3 11.5h18M3 14.5h18" />
     </>
   ),
 }

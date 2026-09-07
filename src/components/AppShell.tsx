@@ -12,6 +12,7 @@ const MENU: MenuItem[] = [
   { to: '/find', label: '보결 조회', icon: 'search' },
   { to: '/assignments', label: '배정 내역', icon: 'list' },
   { to: '/stats', label: '보결 현황', icon: 'chart' },
+  { to: '/pay', label: '보결 수당', icon: 'won' },
   { to: '/teachers', label: '교사 관리', icon: 'people' },
   { to: '/timetable', label: '시간표 관리', icon: 'calendar' },
   { to: '/settings', label: '설정', icon: 'settings' },

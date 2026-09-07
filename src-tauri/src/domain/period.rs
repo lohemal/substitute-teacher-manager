@@ -149,6 +149,42 @@ pub fn resolve(
     }
 }
 
+/// 'YYYY-MM' 을 그 달의 범위로 바꾼다.
+///
+/// `resolve(MONTH, ...)` 는 **오늘이 든 달**만 낼 수 있다. 보결 수당은 지난
+/// 달을 뒤로 넘겨 보는 일이 잦으므로, 달을 직접 지정하는 길을 따로 둔다.
+/// 잘못된 값이면 `None` — 부르는 쪽이 이번 달로 되돌린다.
+pub fn month_of(ym: &str) -> Option<Range> {
+    let t = ym.trim();
+    let (y, m) = t.split_once('-')?;
+    let y: i32 = y.trim().parse().ok()?;
+    let m: u32 = m.trim().parse().ok()?;
+    if !(1..=12).contains(&m) || !(1900..=9999).contains(&y) {
+        return None;
+    }
+    let from = NaiveDate::from_ymd_opt(y, m, 1)?;
+    let to = last_of_month(y, m);
+    Some(Range {
+        from: ymd(from),
+        to: ymd(to),
+        label: format!("{y}년 {m}월"),
+    })
+}
+
+/// 그 달을 'YYYY-MM' 으로.
+pub fn ym_of(d: NaiveDate) -> String {
+    format!("{}-{:02}", d.year(), d.month())
+}
+
+/// 'YYYY-MM' 에서 달을 옮긴다. 화면의 이전/다음 달 버튼이 쓴다.
+pub fn shift_month(ym: &str, by: i32) -> Option<String> {
+    let r = month_of(ym)?;
+    let first = parse(&r.from)?;
+    let total = first.year() * 12 + (first.month0() as i32) + by;
+    let (y, m0) = (total.div_euclid(12), total.rem_euclid(12));
+    Some(format!("{}-{:02}", y, m0 + 1))
+}
+
 /// 범위 안의 날짜를 모두 만든다. 너무 길면 잘라 낸다 (화면 보호).
 pub fn dates_in(range: &Range, max: usize) -> Vec<String> {
     let (Some(a), Some(b)) = (parse(&range.from), parse(&range.to)) else {

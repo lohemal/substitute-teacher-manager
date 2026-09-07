@@ -1,6 +1,7 @@
 import { invoke } from './invoke'
 import type { HistoryFilter } from './assign'
 import type { StatsQuery } from './stats'
+import type { PayPolicy, PayQuery } from './pay'
 
 // ---------- 백업 ----------
 
@@ -53,6 +54,13 @@ export interface OptionRow {
   isDefault: boolean
 }
 
+/** 고를 수 있는 보결 수당 지급 기준. 정의는 Rust 한 곳에만 있다 */
+export interface PolicyRow {
+  code: PayPolicy
+  label: string
+  hint: string
+}
+
 export interface SettingsView {
   engine: OptionRow[]
   autoBackupMode: BackupMode
@@ -62,12 +70,18 @@ export interface SettingsView {
   backupDir: string
   exportDir: string
   fixedNote: string
+  /** 1회 보결 수당(원) */
+  subPayPerCase: number
+  subPayPolicy: PayPolicy
+  subPayPolicies: PolicyRow[]
 }
 
 export interface SettingsInput {
   engine?: { key: string; value: boolean }[]
   autoBackupMode?: BackupMode | null
   autoBackupKeep?: number | null
+  subPayPerCase?: number | null
+  subPayPolicy?: PayPolicy | null
 }
 
 // ---------- 학기 ----------
@@ -164,8 +178,10 @@ export const adminApi = {
 
   // 내보내기 · 초기화
   exportHistory: (filter?: HistoryFilter) =>
-    invoke<ExportResult>('export_history_csv', { filter: filter ?? null }),
+    invoke<ExportResult>('export_history_xlsx', { filter: filter ?? null }),
   exportStats: (query?: StatsQuery) =>
-    invoke<ExportResult>('export_stats_csv', { query: query ?? null }),
+    invoke<ExportResult>('export_stats_xlsx', { query: query ?? null }),
+  exportPay: (query?: PayQuery) =>
+    invoke<ExportResult>('export_pay_xlsx', { query: query ?? null }),
   dataReset: (confirm: string) => invoke<DataResetResult>('data_reset', { confirm }),
 }

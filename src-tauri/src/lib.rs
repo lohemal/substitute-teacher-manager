@@ -123,6 +123,9 @@ pub fn run() {
             commands::assign_history,
             // 보결 현황
             commands::stats_view,
+            // 보결 수당 — 기록을 집계만 한다 (읽기 전용)
+            commands::pay_view,
+            commands::pay_detail,
             // 백업 · 복원
             commands::backup_create,
             commands::backup_list,
@@ -143,8 +146,9 @@ pub fn run() {
             commands::term_set_current,
             commands::term_start_new,
             // 내보내기 · 초기화
-            commands::export_history_csv,
-            commands::export_stats_csv,
+            commands::export_history_xlsx,
+            commands::export_stats_xlsx,
+            commands::export_pay_xlsx,
             commands::data_reset,
         ])
         .run(tauri::generate_context!())

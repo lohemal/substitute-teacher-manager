@@ -35,6 +35,7 @@ fn 옵션을_끄고_다시_읽으면_그대로다() {
             engine: vec![EngineInput { key: INCLUDE_SPECIAL.into(), value: false }],
             auto_backup_mode: None,
             auto_backup_keep: None,
+            ..Default::default()
         },
     )
     .unwrap();
@@ -54,6 +55,7 @@ fn 모르는_옵션은_막는다() {
             engine: vec![EngineInput { key: "없는옵션".into(), value: true }],
             auto_backup_mode: None,
             auto_backup_keep: None,
+            ..Default::default()
         },
     )
     .unwrap_err();
@@ -69,6 +71,7 @@ fn 자동_백업_설정을_바꾼다() {
             engine: vec![],
             auto_backup_mode: Some(BACKUP_ON_EXIT.into()),
             auto_backup_keep: Some(5),
+            ..Default::default()
         },
     )
     .unwrap();
@@ -83,7 +86,7 @@ fn 보관_개수는_너무_작거나_크지_않게_맞춘다() {
     for (put, want) in [(0, 3), (1, 3), (200, 60), (12, 12)] {
         save(
             &c,
-            &SettingsInput { engine: vec![], auto_backup_mode: None, auto_backup_keep: Some(put) },
+            &SettingsInput { engine: vec![], auto_backup_mode: None, auto_backup_keep: Some(put), ..Default::default() },
         )
         .unwrap();
         assert_eq!(v(&c).auto_backup_keep, want, "{put} -> {want}");
@@ -95,7 +98,7 @@ fn 자동_백업_방식이_이상하면_막는다() {
     let c = memory_conn();
     let e = save(
         &c,
-        &SettingsInput { engine: vec![], auto_backup_mode: Some("아무거나".into()), auto_backup_keep: None },
+        &SettingsInput { engine: vec![], auto_backup_mode: Some("아무거나".into()), auto_backup_keep: None, ..Default::default() },
     )
     .unwrap_err();
     assert!(e.user_message.contains("올바르지 않습니다"));
@@ -117,6 +120,7 @@ fn 기본값으로_되돌려도_자료는_남는다() {
             ],
             auto_backup_mode: Some(BACKUP_OFF.into()),
             auto_backup_keep: Some(3),
+            ..Default::default()
         },
     )
     .unwrap();

@@ -1,5 +1,7 @@
 .input {
-  width: 58px;
+  /* 자릿수에 맞춰 늘어난다 (--digits 는 컴포넌트가 max 에서 계산해 넣는다).
+     58px 아래로는 줄지 않아 좁은 칸들의 모양이 그대로 유지된다. */
+  width: max(58px, calc(var(--digits, 4) * 1.1ch + 24px));
   height: 34px;
   padding: 0 6px;
   border: 1px solid var(--border-strong);

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { maxDigits } from '@/lib/numberField'
 import s from './NumberInput.module.css'
 
 /**
@@ -9,6 +10,10 @@ import s from './NumberInput.module.css'
  * 그래서 **입력하는 동안에는 그대로 두고, 칸을 벗어날 때 한 번만** 범위를 맞춘다.
  *
  * 위·아래 화살표로 1씩(Shift와 함께 누르면 10씩) 조절할 수 있다.
+ *
+ * **몇 자리까지 넣을 수 있는지는 `max` 가 정한다.** 예전에는 네 자리로 못
+ * 박아 두어서, 1회 보결 수당처럼 다섯 자리 이상인 값을 넣을 수 없었다.
+ * 칸 너비도 자릿수에 맞춰 늘어난다.
  */
 
 interface Props {
@@ -35,6 +40,9 @@ export function NumberInput({
 }: Props) {
   const [text, setText] = useState(() => String(value))
   const editing = useRef(false)
+
+  // 넣을 수 있는 가장 긴 값의 자릿수. 규칙은 lib/numberField 한 곳에 있다.
+  const digits = maxDigits(min, max)
 
   useEffect(() => {
     if (!editing.current) setText(String(value))
@@ -70,13 +78,21 @@ export function NumberInput({
       autoComplete="off"
       disabled={disabled}
       className={[s.input, className].filter(Boolean).join(' ')}
+      // 사용자 지정 속성은 문자열로 넘긴다 — 단위가 붙지 않는 것이 확실하다
+      style={{ '--digits': String(digits) } as CSSProperties}
       value={text}
-      maxLength={4}
+      maxLength={digits}
       onFocus={(e) => {
         editing.current = true
         e.currentTarget.select()
       }}
-      onChange={(e) => setText(e.target.value.replace(/[^0-9]/g, ''))}
+      onChange={(e) =>
+        setText(
+          min < 0
+            ? e.target.value.replace(/(?!^-)[^0-9]/g, '')
+            : e.target.value.replace(/[^0-9]/g, ''),
+        )
+      }
       onBlur={(e) => {
         editing.current = false
         commit(e.target.value)

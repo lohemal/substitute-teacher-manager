@@ -9,6 +9,7 @@ import { setupApi } from '@/ipc/setup'
 import { FindPage } from '@/pages/FindPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { AssignmentsPage } from '@/pages/AssignmentsPage'
+import { PayPage } from '@/pages/PayPage'
 import { StatsPage } from '@/pages/StatsPage'
 import { TeachersPage } from '@/pages/TeachersPage'
 import { TimetablePage } from '@/pages/TimetablePage'
@@ -75,6 +76,7 @@ export function App() {
           <Route path="/find" element={<FindPage />} />
           <Route path="/assignments" element={<AssignmentsPage />} />
           <Route path="/stats" element={<StatsPage />} />
+          <Route path="/pay" element={<PayPage />} />
           <Route path="/teachers" element={<TeachersPage />} />
           <Route path="/timetable" element={<TimetablePage />} />
           <Route path="/settings" element={<SettingsPage />} />

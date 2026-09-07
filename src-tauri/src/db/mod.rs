@@ -202,6 +202,10 @@ fn copy_db(from: &Connection, dest: &Path) -> AppResult<()> {
 #[path = "backup_tests.rs"]
 mod backup_tests;
 
+#[cfg(test)]
+#[path = "migrate_real_db_tests.rs"]
+mod migrate_real_db_tests;
+
 /// 테스트용: 실제 마이그레이션을 적용한 메모리 DB.
 #[cfg(test)]
 pub fn memory_conn() -> Connection {

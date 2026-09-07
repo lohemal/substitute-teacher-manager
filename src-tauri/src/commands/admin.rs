@@ -241,18 +241,18 @@ pub struct ExportResult {
     pub rows: i32,
 }
 
-#[tauri::command]
-pub fn export_history_csv(
-    state: State<'_, AppState>,
-    filter: Option<HistoryFilter>,
+/// 시트들을 파일로 쓰고 화면에 알려 줄 값을 만든다. 세 내보내기가 같이 쓴다.
+pub fn save_book(
+    state: &State<'_, AppState>,
+    base: &str,
+    sheets: &[repo_export::Sheet],
 ) -> AppResult<ExportResult> {
-    let f = filter.unwrap_or_default();
-    let body = state.db.read(|c| repo_export::history_csv(c, &f))?;
-    let rows = body.lines().count().saturating_sub(1) as i32;
-
     let dir = state.db.export_dir();
-    let name = repo_export::safe_name("보결배정내역");
-    let path = repo_export::write_csv(&dir, &name, &body)?;
+    let name = repo_export::safe_name(base);
+    let path = repo_export::write_book(&dir, &name, sheets)?;
+
+    // 자료가 있는 시트들의 줄 수 (머리글·합계는 세지 않는다)
+    let rows = sheets.iter().map(|s| s.rows.len()).sum::<usize>() as i32;
 
     Ok(ExportResult {
         name,
@@ -263,23 +263,23 @@ pub fn export_history_csv(
 }
 
 #[tauri::command]
-pub fn export_stats_csv(
+pub fn export_history_xlsx(
+    state: State<'_, AppState>,
+    filter: Option<HistoryFilter>,
+) -> AppResult<ExportResult> {
+    let f = filter.unwrap_or_default();
+    let sheets = state.db.read(|c| repo_export::history_sheets(c, &f))?;
+    save_book(&state, "보결배정내역", &sheets)
+}
+
+#[tauri::command]
+pub fn export_stats_xlsx(
     state: State<'_, AppState>,
     query: Option<StatsQuery>,
 ) -> AppResult<ExportResult> {
     let q = query.unwrap_or_default();
-    let body = state.db.read(|c| repo_export::stats_csv(c, &q))?;
-
-    let dir = state.db.export_dir();
-    let name = repo_export::safe_name("보결현황");
-    let path = repo_export::write_csv(&dir, &name, &body)?;
-
-    Ok(ExportResult {
-        name,
-        path: path.display().to_string(),
-        folder: dir.display().to_string(),
-        rows: body.lines().count() as i32,
-    })
+    let sheets = state.db.read(|c| repo_export::stats_sheets(c, &q))?;
+    save_book(&state, "보결현황", &sheets)
 }
 
 // ============================================================

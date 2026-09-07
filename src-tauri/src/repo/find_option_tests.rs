@@ -99,6 +99,7 @@ fn set(conn: &Connection, key: &str, value: bool) {
             }],
             auto_backup_mode: None,
             auto_backup_keep: None,
+            ..Default::default()
         },
     )
     .unwrap();

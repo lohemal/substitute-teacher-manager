@@ -12,6 +12,7 @@
 use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
+use crate::domain::pay;
 use crate::error::{AppError, AppResult};
 
 // ---------- 보결 판단 ----------
@@ -21,6 +22,16 @@ pub const EXCLUDE_RECESS: &str = "exclude_homeroom_on_recess";
 pub const INCLUDE_SPECIAL: &str = "include_special_teachers";
 pub const INCLUDE_AFTER_END: &str = "include_after_school_end";
 pub const INCLUDE_OTHER_GRADE: &str = "include_other_grade_homeroom";
+
+// ---------- 보결 수당 ----------
+//
+// 계산 결과는 저장하지 않는다. 여기 있는 것은 **학교가 정한 규정**뿐이고,
+// 금액은 조회할 때마다 배정 기록에서 다시 계산한다.
+pub const SUB_PAY_PER_CASE: &str = "sub_pay_per_case";
+pub const SUB_PAY_POLICY: &str = "sub_pay_policy";
+
+/// 1회 보결 수당의 상한. 오타로 0을 더 붙였을 때를 막는 정도의 값이다.
+pub const SUB_PAY_MAX: i64 = 1_000_000;
 
 // ---------- 자동 백업 ----------
 pub const AUTO_BACKUP_MODE: &str = "auto_backup_mode";
@@ -136,6 +147,38 @@ pub struct OptionRow {
     pub is_default: bool,
 }
 
+/// 지급 기준 하나. 정의는 `domain::pay` 한 곳에만 있다.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PolicyRow {
+    pub code: String,
+    pub label: String,
+    pub hint: String,
+}
+
+pub fn policy_rows() -> Vec<PolicyRow> {
+    pay::all_policies()
+        .iter()
+        .map(|r| PolicyRow {
+            code: r.code().to_string(),
+            label: r.label().to_string(),
+            hint: r.hint().to_string(),
+        })
+        .collect()
+}
+
+/// 지금 저장된 수당 설정. 수당 화면과 설정 화면이 같은 값을 본다.
+pub fn pay_config(conn: &Connection) -> AppResult<pay::PayConfig> {
+    let per_case = get_int(conn, SUB_PAY_PER_CASE, pay::DEFAULT_PER_CASE)?.clamp(0, SUB_PAY_MAX);
+    let policy = get_text(conn, SUB_PAY_POLICY, pay::DEFAULT_POLICY)?;
+    let policy = if pay::is_known_policy(&policy) {
+        policy
+    } else {
+        pay::DEFAULT_POLICY.to_string()
+    };
+    Ok(pay::PayConfig { policy, per_case })
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {
@@ -143,6 +186,12 @@ pub struct SettingsView {
     /// OFF | DAILY | ON_EXIT
     pub auto_backup_mode: String,
     pub auto_backup_keep: i64,
+    /// 1회 보결 수당(원)
+    pub sub_pay_per_case: i64,
+    /// ALL_ASSIGNED | DEDUCT_OWN_CAUSED
+    pub sub_pay_policy: String,
+    /// 고를 수 있는 지급 기준 — 화면은 이 목록만 보고 그린다
+    pub sub_pay_policies: Vec<PolicyRow>,
     /// 하나라도 기본값과 다른가
     pub changed: bool,
     pub db_path: String,
@@ -184,10 +233,17 @@ pub fn view(
         changed = true;
     }
 
+    // 수당 설정은 '기본값과 다른가' 표시에 넣지 않는다. 금액을 정하는 것은
+    // 동작 방식을 바꾼 것이 아니라 학교 규정을 적어 둔 것이다.
+    let cfg = pay_config(conn)?;
+
     Ok(SettingsView {
         engine,
         auto_backup_mode: mode,
         auto_backup_keep: keep,
+        sub_pay_per_case: cfg.per_case,
+        sub_pay_policy: cfg.policy,
+        sub_pay_policies: policy_rows(),
         changed,
         db_path: db_path.to_string(),
         backup_dir: backup_dir.to_string(),
@@ -196,7 +252,7 @@ pub fn view(
     })
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsInput {
     /// 바꿀 옵션만 담아도 된다
@@ -206,6 +262,10 @@ pub struct SettingsInput {
     pub auto_backup_mode: Option<String>,
     #[serde(default)]
     pub auto_backup_keep: Option<i64>,
+    #[serde(default)]
+    pub sub_pay_per_case: Option<i64>,
+    #[serde(default)]
+    pub sub_pay_policy: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -236,10 +296,33 @@ pub fn save(conn: &Connection, input: &SettingsInput) -> AppResult<()> {
         let k = k.clamp(3, 60);
         put(conn, AUTO_BACKUP_KEEP, &k.to_string())?;
     }
+
+    if let Some(v) = input.sub_pay_per_case {
+        if v < 0 {
+            return Err(AppError::invalid("1회 보결 수당은 0원 이상이어야 합니다."));
+        }
+        if v > SUB_PAY_MAX {
+            return Err(AppError::invalid(format!(
+                "1회 보결 수당이 너무 큽니다. {}원 이하로 입력해 주세요.",
+                pay::won(SUB_PAY_MAX)
+            )));
+        }
+        put(conn, SUB_PAY_PER_CASE, &v.to_string())?;
+    }
+    if let Some(p) = &input.sub_pay_policy {
+        if !pay::is_known_policy(p) {
+            return Err(AppError::invalid("알 수 없는 보결 수당 지급 기준입니다."));
+        }
+        put(conn, SUB_PAY_POLICY, &format!("\"{p}\""))?;
+    }
     Ok(())
 }
 
 /// **동작 옵션만** 기본값으로 되돌린다. 자료는 건드리지 않는다.
+///
+/// 보결 수당(1회 금액·지급 기준)은 여기서 되돌리지 않는다. 학교가 정해 적어
+/// 둔 규정이라서, 판단 옵션을 되돌리려던 사람이 금액까지 0원으로 잃는 것은
+/// 놀라운 일이다. 수당은 수당 설정에서 직접 고친다.
 pub fn reset(conn: &Connection) -> AppResult<()> {
     for d in ENGINE_OPTIONS {
         put(conn, d.key, if d.default { "true" } else { "false" })?;

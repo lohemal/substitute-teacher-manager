@@ -5,6 +5,7 @@ import { Button, Card, Notice, Page } from '@/components/ui'
 import { BackupCard } from '@/features/admin/BackupCard'
 import { DangerCard, LocationCard } from '@/features/admin/DangerCard'
 import { OptionsCard } from '@/features/admin/OptionsCard'
+import { PayCard } from '@/features/admin/PayCard'
 import { TermCard } from '@/features/admin/TermCard'
 import { UpdateCard } from '@/features/admin/UpdateCard'
 import { PriorityEditor } from '@/features/priority/PriorityEditor'
@@ -39,6 +40,7 @@ export function SettingsPage() {
       </Card>
 
       <OptionsCard />
+      <PayCard />
       <TermCard />
       <BackupCard />
       <LocationCard />

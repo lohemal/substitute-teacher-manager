@@ -281,7 +281,7 @@ pub fn open_folder(dir: &Path) -> AppResult<()> {
             .map_err(|e| {
                 AppError::new("OPEN_FAILED", "폴더를 열지 못했습니다.").detail(e.to_string())
             })?;
-        return Ok(());
+        Ok(())
     }
     #[cfg(not(target_os = "windows"))]
     {
