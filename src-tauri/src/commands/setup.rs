@@ -55,9 +55,11 @@ pub fn setup_skip_step(state: State<'_, AppState>, step_key: String) -> AppResul
 /// 초기 설정을 마친다. 이후 프로그램 시작 화면은 '보결 조회'가 된다.
 #[tauri::command]
 pub fn setup_complete(state: State<'_, AppState>) -> AppResult<SetupState> {
+    // 한 트랜잭션 안에서 끝낸다. 중간 상태가 화면에 보이지 않는다.
     state.db.write(|c| {
         setup::set_status(c, "DONE", setup::STATUS_DONE)?;
         setup::mark_completed(c)?;
+        setup::clear_all_drafts(c)?;
         setup::get_state(c)
     })
 }

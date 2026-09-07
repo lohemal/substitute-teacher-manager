@@ -40,6 +40,76 @@ const nextKey = () => `r${++keySeq}`
 export const DEFAULT_LESSON = 40
 export const DEFAULT_BREAK = 10
 
+/**
+ * 시각 길이의 **단 하나의 기본값**.
+ *
+ * 화면 여러 곳(처음부터 다시 만들기 · 시간 일괄 조정 · 중간놀이 추가)이
+ * 같은 값을 써야 한다. 예전에는 곳마다 숫자를 따로 적어 두어서,
+ * 일괄 조정에서 중간놀이를 20분으로 바꿔도 [중간놀이 추가]는 30분을
+ * 넣는 문제가 있었다.
+ */
+export interface Lengths {
+  firstStart: number
+  period: number
+  break: number
+  lunch: number
+  recess: number
+}
+
+export const DEFAULT_LENGTHS: Lengths = {
+  firstStart: 9 * 60,
+  period: DEFAULT_LESSON,
+  break: DEFAULT_BREAK,
+  lunch: 50,
+  recess: 30,
+}
+
+/**
+ * 지금 시정표에서 길이를 읽어 낸다. 없는 값은 `null`.
+ *
+ * 자료에 실제로 들어 있는 값이 가장 믿을 만하므로 이것을 먼저 쓴다.
+ * 아직 없는 구간(예: 중간놀이 행이 없음)은 `null`을 돌려주어,
+ * 부르는 쪽이 '사용자가 마지막에 정한 값'으로 메울 수 있게 한다.
+ */
+export function detectLengths(rows: Row[]): {
+  [K in keyof Lengths]: number | null
+} {
+  const sorted = [...rows].sort(byStart)
+  const lenOf = (kind: Row['kind']) => {
+    const r = sorted.find((x) => x.kind === kind)
+    return r ? r.endMin - r.startMin : null
+  }
+
+  // 수업과 수업 사이의 빈 시간이 쉬는 시간
+  let brk: number | null = null
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    if (sorted[i].kind === 'PERIOD' && sorted[i + 1].kind === 'PERIOD') {
+      brk = sorted[i + 1].startMin - sorted[i].endMin
+      break
+    }
+  }
+
+  return {
+    firstStart: sorted[0]?.startMin ?? null,
+    period: lenOf('PERIOD'),
+    break: brk,
+    lunch: lenOf('LUNCH'),
+    recess: lenOf('OTHER'),
+  }
+}
+
+/** 자료에서 읽은 값을 먼저 쓰고, 없으면 사용자가 마지막에 정한 값을 쓴다. */
+export function mergeLengths(rows: Row[], remembered: Lengths): Lengths {
+  const d = detectLengths(rows)
+  return {
+    firstStart: d.firstStart ?? remembered.firstStart,
+    period: d.period ?? remembered.period,
+    break: d.break ?? remembered.break,
+    lunch: d.lunch ?? remembered.lunch,
+    recess: d.recess ?? remembered.recess,
+  }
+}
+
 export function rowLabel(r: Row): string {
   if (r.kind === 'LUNCH') return '점심'
   if (r.kind === 'OTHER') return (r.name ?? '').trim() || RECESS_LABEL
@@ -165,13 +235,21 @@ export function hasLunch(rows: Row[]): boolean {
   return rows.some((r) => r.kind === 'LUNCH')
 }
 
-/** 마지막 행 뒤에 새 교시를 붙인다. */
-export function addPeriod(rows: Row[]): Row[] {
+/**
+ * 마지막 행 뒤에 새 교시를 붙인다.
+ *
+ * 자료에 이미 교시가 있으면 그 길이를 따르고, 아직 없으면 `lengths` 를 쓴다.
+ * `lengths` 를 필수로 받는 이유는 여기에 따로 기본값을 두면 화면이 보여 주는
+ * 값과 실제로 들어가는 값이 조용히 달라지기 때문이다.
+ */
+export function addPeriod(rows: Row[], lengths: Lengths): Row[] {
   const sorted = [...rows].sort(byStart)
   const last = sorted[sorted.length - 1]
   const lastPeriod = sorted.filter((r) => r.kind === 'PERIOD').pop()
-  const length = lastPeriod ? lastPeriod.endMin - lastPeriod.startMin : DEFAULT_LESSON
-  const start = last ? last.endMin + (last.kind === 'LUNCH' ? 0 : DEFAULT_BREAK) : 9 * 60
+  const length = lastPeriod ? lastPeriod.endMin - lastPeriod.startMin : lengths.period
+  const start = last
+    ? last.endMin + (last.kind === 'LUNCH' ? 0 : detectBreakOr(sorted, lengths.break))
+    : lengths.firstStart
   return [
     ...rows,
     {
@@ -184,13 +262,22 @@ export function addPeriod(rows: Row[]): Row[] {
   ]
 }
 
-/** 점심을 넣는다. 끼워 넣은 만큼 뒤 교시를 밀어낸다. */
-export function addLunch(rows: Row[], afterPeriod: number, minutes = 50): Row[] {
+/**
+ * 점심을 넣는다. 끼워 넣은 만큼 뒤 교시를 밀어낸다.
+ *
+ * `minutes` 에 기본값을 두지 않는다. 기본값이 있으면 부르는 쪽이 길이를
+ * 넘기는 것을 잊어도 조용히 다른 값이 들어가기 때문이다.
+ */
+export function addLunch(rows: Row[], afterPeriod: number, minutes: number): Row[] {
   return insertBreakRow(rows, { kind: 'LUNCH', afterPeriod, minutes, fallbackStart: 12 * 60 })
 }
 
-/** 중간놀이 등 기타 시간 구간을 넣는다. 끼워 넣은 만큼 뒤 교시를 밀어낸다. */
-export function addRecess(rows: Row[], afterPeriod: number, minutes = 30): Row[] {
+/**
+ * 중간놀이 등 기타 시간 구간을 넣는다. 끼워 넣은 만큼 뒤 교시를 밀어낸다.
+ *
+ * `minutes` 에 기본값을 두지 않는다. 사용자가 정한 길이를 반드시 받아야 한다.
+ */
+export function addRecess(rows: Row[], afterPeriod: number, minutes: number): Row[] {
   return insertBreakRow(rows, {
     kind: 'OTHER',
     afterPeriod,
@@ -198,6 +285,16 @@ export function addRecess(rows: Row[], afterPeriod: number, minutes = 30): Row[]
     name: RECESS_LABEL,
     fallbackStart: 10 * 60 + 30,
   })
+}
+
+/** 자료에서 쉬는 시간을 읽고, 읽을 수 없으면 넘겨받은 값을 쓴다. */
+function detectBreakOr(rows: Row[], fallback: number): number {
+  for (let i = 0; i + 1 < rows.length; i++) {
+    if (rows[i].kind === 'PERIOD' && rows[i + 1].kind === 'PERIOD') {
+      return Math.max(0, rows[i + 1].startMin - rows[i].endMin)
+    }
+  }
+  return fallback
 }
 
 /** 수업과 수업 사이의 쉬는 시간을 지금 자료에서 읽어 낸다. */

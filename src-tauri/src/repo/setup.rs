@@ -170,6 +170,19 @@ pub fn get_draft(conn: &Connection, step_key: &str) -> AppResult<Option<String>>
     Ok(v)
 }
 
+/// 설정을 마칠 때 남은 자동저장 초안을 모두 지운다.
+///
+/// 초안은 '아직 저장하지 않은 입력'을 담아 두는 곳이다. 설정을 마쳤다면
+/// 모든 값이 본 자료로 들어갔으므로 초안은 뜻이 없다. 남겨 두면 나중에
+/// 설정을 다시 열었을 때 예전 입력이 되살아나 혼란을 준다.
+pub fn clear_all_drafts(conn: &Connection) -> AppResult<usize> {
+    let n = conn.execute(
+        "DELETE FROM settings WHERE key LIKE ?1",
+        params![format!("{DRAFT_PREFIX}%")],
+    )?;
+    Ok(n)
+}
+
 pub fn clear_draft(conn: &Connection, step_key: &str) -> AppResult<()> {
     conn.execute(
         "DELETE FROM settings WHERE key = ?1",
@@ -270,6 +283,51 @@ mod tests {
 
         let draft = get_draft(&c, "SCHOOL").unwrap();
         assert!(draft.is_some(), "진행 상태만 초기화하고 입력 자료는 지우지 않는다");
+    }
+
+    /// `setup_complete` 명령이 한 트랜잭션 안에서 하는 일을 그대로 따라간다.
+    ///
+    /// 실제 화면에서 [설정 마치고 시작하기] 를 눌렀는데 시작 화면이 다시 떠서
+    /// 한 번 더 눌러야 했던 문제가 있었다. 그때 남아 있던 초안 때문에
+    /// '설정을 이어서 진행할까요?' 가 뜬 것이므로, 마치는 순간
+    /// **완료 표시와 초안 삭제가 함께** 되어야 한다.
+    #[test]
+    fn 설정을_마치면_완료_표시와_초안_삭제가_함께_된다() {
+        let c = memory_conn();
+
+        // 여러 단계를 입력하다 만 상태
+        save_draft(&c, "SCHOOL", r#"{"name":"한빛초"}"#).unwrap();
+        save_draft(&c, "BELL", r#"{"draft":true}"#).unwrap();
+        save_draft(&c, "TEACHER", r#"{"draft":true}"#).unwrap();
+        for k in ["SCHOOL", "BELL", "TEACHER", "LESSON", "PRIORITY"] {
+            set_status(&c, k, STATUS_DONE).unwrap();
+        }
+
+        // setup_complete 이 하는 일
+        set_status(&c, "DONE", STATUS_DONE).unwrap();
+        mark_completed(&c).unwrap();
+        let cleared = clear_all_drafts(&c).unwrap();
+        assert_eq!(cleared, 3, "남아 있던 초안 세 개가 모두 지워져야 한다");
+
+        let st = get_state(&c).unwrap();
+        assert!(st.completed, "한 번에 완료로 바뀌어야 한다");
+        assert!(
+            st.steps.iter().all(|s| s.status == STATUS_DONE),
+            "모든 단계가 완료여야 한다"
+        );
+
+        for k in ["SCHOOL", "BELL", "TEACHER"] {
+            assert!(
+                get_draft(&c, k).unwrap().is_none(),
+                "{k} 초안이 남아 있으면 설정 화면이 예전 입력을 되살린다"
+            );
+        }
+    }
+
+    #[test]
+    fn 초안이_없어도_지우기는_조용히_끝난다() {
+        let c = memory_conn();
+        assert_eq!(clear_all_drafts(&c).unwrap(), 0);
     }
 
     #[test]

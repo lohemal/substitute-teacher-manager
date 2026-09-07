@@ -21,7 +21,7 @@
 
 ## 설치
 
-[릴리스 페이지](../../releases/latest)에서 `bogyeol_0.1.2_x64-setup.exe` 처럼 생긴 설치 파일을 내려받아 실행하세요.
+[릴리스 페이지](../../releases/latest)에서 `bogyeol_0.1.5_x64-setup.exe` 처럼 생긴 설치 파일을 내려받아 실행하세요.
 관리자 권한이 필요 없습니다.
 
 > Windows가 "PC를 보호했습니다" 창을 띄우면 **추가 정보 → 실행** 을 누르세요.
@@ -45,6 +45,19 @@
 npm install
 npm run tauri dev
 ```
+
+### 실제 자료를 건드리지 않고 연습하기
+
+초기 설정을 처음부터 다시 해 보는 것처럼, **자료를 지우는 시험**을 해야 할 때가
+있습니다. 그럴 때는 연습용으로 띄우세요.
+
+```bash
+npm run app:sandbox
+```
+
+자료를 `%APPDATA%\kr.school.bogyeol.sandbox\` 에 따로 만들므로
+실제 자료(`kr.school.bogyeol`)는 손대지 않습니다. 창 제목에 **연습용**이라고
+나옵니다. 다 끝냈으면 그 폴더를 지우면 됩니다.
 
 ### 검사
 

@@ -11,6 +11,7 @@ import {
   patchRow,
   removeRow,
   rowLabel,
+  type Lengths,
   type Row,
 } from './bellModel'
 import s from './SlotRows.module.css'
@@ -18,12 +19,19 @@ import s from './SlotRows.module.css'
 interface Props {
   rows: Row[]
   onChange: (rows: Row[]) => void
+  /**
+   * 점심·중간놀이를 새로 넣을 때 쓸 길이.
+   *
+   * 위쪽 '시간 일괄 조정'에서 정한 값과 같은 것을 받는다. 여기서 따로
+   * 기본값을 두면 사용자가 20분으로 바꿔도 30분이 들어가게 된다.
+   */
+  lengths: Lengths
   /** 이 표에서 지울 수 있는 교시 번호(마지막 교시만) */
   allowDeletePeriod?: boolean
 }
 
 /** 교시·점심·중간놀이 시각을 한 줄씩 편집하는 표. */
-export function SlotRows({ rows, onChange, allowDeletePeriod = true }: Props) {
+export function SlotRows({ rows, onChange, lengths, allowDeletePeriod = true }: Props) {
   const sorted = [...rows].sort((a, b) => a.startMin - b.startMin)
   const lastPeriodKey = sorted.filter((r) => r.kind === 'PERIOD').pop()?.key
 
@@ -122,25 +130,25 @@ export function SlotRows({ rows, onChange, allowDeletePeriod = true }: Props) {
       })}
 
       <div className={s.actions}>
-        <button type="button" className={s.addBtn} onClick={() => onChange(addPeriod(rows))}>
+        <button type="button" className={s.addBtn} onClick={() => onChange(addPeriod(rows, lengths))}>
           <Icon name="plus" size={15} /> 교시 추가
         </button>
         {!hasLunch(rows) && (
           <button
             type="button"
             className={s.addBtn}
-            onClick={() => onChange(addLunch(rows, Math.max(1, maxPeriod(rows) - 1)))}
+            onClick={() => onChange(addLunch(rows, Math.max(1, maxPeriod(rows) - 1), lengths.lunch))}
           >
-            <Icon name="plus" size={15} /> 점심시간 추가
+            <Icon name="plus" size={15} /> 점심시간 추가 ({lengths.lunch}분)
           </button>
         )}
         <button
           type="button"
           className={s.addBtn}
-          onClick={() => onChange(addRecess(rows, Math.min(2, maxPeriod(rows))))}
-          title="중간놀이, 아침활동처럼 수업이 아닌 시간 구간을 넣습니다"
+          onClick={() => onChange(addRecess(rows, Math.min(2, maxPeriod(rows)), lengths.recess))}
+          title={`중간놀이, 아침활동처럼 수업이 아닌 시간 구간을 ${lengths.recess}분으로 넣습니다`}
         >
-          <Icon name="plus" size={15} /> 중간놀이 추가
+          <Icon name="plus" size={15} /> 중간놀이 추가 ({lengths.recess}분)
         </button>
       </div>
 

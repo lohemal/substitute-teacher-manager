@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import { Icon } from '@/components/Icon'
 import { Button } from '@/components/ui'
@@ -23,6 +23,14 @@ export function WelcomePage() {
       navigate('/setup/SCHOOL')
     },
   })
+
+  // 설정을 이미 마쳤다면 이 화면에 머물 이유가 없다.
+  //
+  // 모든 단계가 DONE 이어도 hasProgress 는 참이므로, 이 가드가 없으면
+  // 설정을 마친 뒤에도 '설정을 이어서 진행할까요?' 가 뜬다.
+  if (state?.completed) {
+    return <Navigate to="/find" replace />
+  }
 
   const resuming = !!state?.hasProgress
   const lastStep = state?.lastWorkedStep

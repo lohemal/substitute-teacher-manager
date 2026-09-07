@@ -18,13 +18,18 @@ import { errorMessage } from '@/ipc/invoke'
 import {
   copyDay,
   derive,
+  DEFAULT_LENGTHS,
   emptyState,
   expand,
   maxPeriod,
+  mergeLengths,
+  richestDayOf,
   toCommon,
   toPerDay,
   type EditorState,
+  type Lengths,
 } from './bellModel'
+import { useRemembered } from '@/lib/remember'
 import { SlotRows } from './SlotRows'
 import s from './BellEditor.module.css'
 
@@ -64,6 +69,17 @@ export function BellEditor() {
   const [saved, setSaved] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  /**
+   * 시각 길이 — 화면 전체가 이 하나만 쓴다.
+   *
+   * 사용자가 마지막에 정한 값을 브라우저 저장소에 기억해 둔다. 그래서 설정
+   * 단계를 옮기거나 앱을 다시 켜도 같은 값이 남는다 (자료 파일과는 무관하다).
+   */
+  const [rememberedLengths, setRememberedLengths] = useRemembered<Lengths>(
+    'bell.lengths',
+    DEFAULT_LENGTHS,
+  )
+
   const schoolDays = ov?.schoolDays ?? [1, 2, 3, 4, 5]
   const profile = ov?.profiles.find((p) => p.id === selectedId) ?? null
 
@@ -89,6 +105,25 @@ export function BellEditor() {
     setGrades(target.grades)
     setDirty(false)
   }, [ov, selectedId, dirty])
+
+  /**
+   * 화면 전체가 쓰는 길이는 이 값 하나다.
+   *
+   * 시정표를 새로 불러올 때 **그 자료에 들어 있는 길이를 한 번 받아들이고**,
+   * 그 뒤 사용자가 고친 값은 자료가 덮어쓰지 않는다. 그래서 일괄 조정에서
+   * 중간놀이를 20분으로 바꾸면 [중간놀이 추가]도 20분을 넣는다.
+   */
+  const lengths = rememberedLengths
+  const adoptedFor = useRef<number | null>(null)
+  useEffect(() => {
+    if (!state || !profile) return
+    if (adoptedFor.current === profile.id) return
+    adoptedFor.current = profile.id
+    const rows = state.perDay
+      ? (state.byDay[richestDayOf(state, schoolDays)] ?? [])
+      : state.base
+    setRememberedLengths(mergeLengths(rows, rememberedLengths))
+  }, [state, profile, schoolDays, rememberedLengths, setRememberedLengths])
 
   const slots: Slot[] = useMemo(
     () => (state ? expand(state, schoolDays) : []),
@@ -358,7 +393,8 @@ export function BellEditor() {
           <BulkAdjust
             profiles={ov.profiles}
             currentId={profile.id}
-            slots={slots}
+            lengths={lengths}
+            onLengths={setRememberedLengths}
             dirty={dirty}
             pending={reflow.isPending}
             error={reflow.error ? errorMessage(reflow.error) : null}
@@ -368,7 +404,8 @@ export function BellEditor() {
           {/* ---- 처음부터 다시 만들기 ---- */}
           <QuickFill
             schoolDays={schoolDays}
-            state={state}
+            lengths={lengths}
+            onLengths={setRememberedLengths}
             pending={generate.isPending}
             error={generate.error ? errorMessage(generate.error) : null}
             onGenerate={(params) => generate.mutate(params)}
@@ -395,11 +432,17 @@ export function BellEditor() {
             </div>
 
             {state.perDay ? (
-              <PerDayEditor state={state} schoolDays={schoolDays} setRows={setRows} />
+              <PerDayEditor
+                state={state}
+                schoolDays={schoolDays}
+                lengths={lengths}
+                setRows={setRows}
+              />
             ) : (
               <div className={s.commonGrid}>
                 <div>
                   <SlotRows
+                    lengths={lengths}
                     rows={state.base}
                     onChange={(rows) =>
                       setRows((st) => {
@@ -522,13 +565,15 @@ export function BellEditor() {
 
 function QuickFill({
   schoolDays,
-  state,
+  lengths,
+  onLengths,
   pending,
   error,
   onGenerate,
 }: {
   schoolDays: number[]
-  state: EditorState
+  lengths: Lengths
+  onLengths: (v: Lengths) => void
   pending: boolean
   error: string | null
   onGenerate: (p: {
@@ -543,17 +588,16 @@ function QuickFill({
     periodsByDay: [number, number][]
   }) => void
 }) {
-  const [open, setOpen] = useState(state.base.length === 0 && !state.perDay)
-  const [firstStart, setFirstStart] = useState(9 * 60)
-  const [lesson, setLesson] = useState(40)
-  const [brk, setBrk] = useState(10)
+  // 처음 들어왔을 때 펼쳐 둔다 — 시정표를 처음 만드는 사람이 먼저 볼 곳이다
+  const [open, setOpen] = useState(true)
   const [lunchAfter, setLunchAfter] = useState(4)
-  const [lunchLen, setLunchLen] = useState(50)
   const [recessAfter, setRecessAfter] = useState(0)
-  const [recessLen, setRecessLen] = useState(30)
   const [counts, setCounts] = useState<Record<number, number>>(() =>
     Object.fromEntries(schoolDays.map((d) => [d, 5])),
   )
+
+  // 길이는 화면 전체가 함께 쓰는 값이다 (여기에 따로 두지 않는다)
+  const put = (patch: Partial<Lengths>) => onLengths({ ...lengths, ...patch })
 
   return (
     <section className={s.card}>
@@ -574,15 +618,27 @@ function QuickFill({
           <div className={s.quickRow}>
             <label className={s.quickField}>
               <span>1교시 시작</span>
-              <TimeInput value={firstStart} onChange={setFirstStart} />
+              <TimeInput value={lengths.firstStart} onChange={(v) => put({ firstStart: v })} />
             </label>
             <label className={s.quickField}>
               <span>수업</span>
-              <NumBox value={lesson} onChange={setLesson} min={5} max={180} unit="분" />
+              <NumBox
+                value={lengths.period}
+                onChange={(v) => put({ period: v })}
+                min={5}
+                max={180}
+                unit="분"
+              />
             </label>
             <label className={s.quickField}>
               <span>쉬는 시간</span>
-              <NumBox value={brk} onChange={setBrk} min={0} max={60} unit="분" />
+              <NumBox
+                value={lengths.break}
+                onChange={(v) => put({ break: v })}
+                min={0}
+                max={60}
+                unit="분"
+              />
             </label>
             <label className={s.quickField}>
               <span>점심</span>
@@ -590,7 +646,13 @@ function QuickFill({
             </label>
             <label className={s.quickField}>
               <span>점심 길이</span>
-              <NumBox value={lunchLen} onChange={setLunchLen} min={10} max={120} unit="분" />
+              <NumBox
+                value={lengths.lunch}
+                onChange={(v) => put({ lunch: v })}
+                min={10}
+                max={120}
+                unit="분"
+              />
             </label>
             <label className={s.quickField}>
               <span>중간놀이</span>
@@ -598,7 +660,13 @@ function QuickFill({
             </label>
             <label className={s.quickField}>
               <span>중간놀이 길이</span>
-              <NumBox value={recessLen} onChange={setRecessLen} min={5} max={120} unit="분" />
+              <NumBox
+                value={lengths.recess}
+                onChange={(v) => put({ recess: v })}
+                min={5}
+                max={120}
+                unit="분"
+              />
             </label>
           </div>
           <p className={s.subHint}>중간놀이가 없으면 &lsquo;0교시 뒤&rsquo;로 두세요.</p>
@@ -625,13 +693,13 @@ function QuickFill({
             disabled={pending}
             onClick={() =>
               onGenerate({
-                firstStartMin: firstStart,
-                lessonMinutes: lesson,
-                breakMinutes: brk,
+                firstStartMin: lengths.firstStart,
+                lessonMinutes: lengths.period,
+                breakMinutes: lengths.break,
                 lunchAfterPeriod: lunchAfter,
-                lunchMinutes: lunchLen,
+                lunchMinutes: lengths.lunch,
                 recessAfterPeriod: recessAfter,
-                recessMinutes: recessLen,
+                recessMinutes: lengths.recess,
                 recessLabel: '',
                 periodsByDay: schoolDays.map((d) => [d, counts[d] ?? 5] as [number, number]),
               })
@@ -672,10 +740,12 @@ function NumBox({
 function PerDayEditor({
   state,
   schoolDays,
+  lengths,
   setRows,
 }: {
   state: EditorState
   schoolDays: number[]
+  lengths: Lengths
   setRows: (u: (st: EditorState) => EditorState) => void
 }) {
   const [day, setDay] = useState(schoolDays[0] ?? 1)
@@ -698,6 +768,7 @@ function PerDayEditor({
       </div>
 
       <SlotRows
+        lengths={lengths}
         rows={state.byDay[active] ?? []}
         onChange={(rows) => setRows((st) => ({ ...st, byDay: { ...st.byDay, [active]: rows } }))}
       />
@@ -803,7 +874,8 @@ function Preview({ slots, schoolDays }: { slots: Slot[]; schoolDays: number[] })
 function BulkAdjust({
   profiles,
   currentId,
-  slots,
+  lengths,
+  onLengths,
   dirty,
   pending,
   error,
@@ -811,148 +883,127 @@ function BulkAdjust({
 }: {
   profiles: { id: number; name: string }[]
   currentId: number
-  slots: Slot[]
+  lengths: Lengths
+  onLengths: (v: Lengths) => void
   dirty: boolean
   pending: boolean
   error: string | null
   onApply: (ids: number[], params: ReflowParams) => void
 }) {
-  // 지금 시각에서 읽어 온 값을 기본으로 보여 준다
-  const guess = useMemo(() => measure(slots), [slots])
-
-  const [firstStart, setFirstStart] = useState(guess.firstStart)
-  const [lesson, setLesson] = useState(guess.lesson)
-  const [brk, setBrk] = useState(guess.brk)
-  const [lunchLen, setLunchLen] = useState(guess.lunch)
-  const [otherLen, setOtherLen] = useState(guess.other)
+  // 처음 들어왔을 때는 접어 둔다 — 이미 만들어 둔 시정표를 손볼 때 쓰는 곳이다
+  const [open, setOpen] = useState(false)
   const [allProfiles, setAllProfiles] = useState(true)
-  const [touched, setTouched] = useState(false)
 
-  // 다른 유형으로 옮기면 그 유형의 현재 값으로 다시 채운다 (아직 손대지 않았을 때만)
-  useEffect(() => {
-    if (touched) return
-    setFirstStart(guess.firstStart)
-    setLesson(guess.lesson)
-    setBrk(guess.brk)
-    setLunchLen(guess.lunch)
-    setOtherLen(guess.other)
-  }, [guess, touched])
-
-  const mark = <T,>(setter: (v: T) => void) => (v: T) => {
-    setTouched(true)
-    setter(v)
-  }
-
+  // 길이는 화면 전체가 함께 쓰는 값이다 (여기에 따로 두지 않는다)
+  const put = (patch: Partial<Lengths>) => onLengths({ ...lengths, ...patch })
   const targets = allProfiles ? profiles.map((p) => p.id) : [currentId]
 
   return (
     <section className={s.card}>
-      <h3 className={s.cardTitle}>시간 일괄 조정</h3>
-      <p className={s.subHint}>
-        수업·쉬는 시간·점심·중간놀이 길이를 입력하면 <strong>교시 수와 점심·중간놀이 위치는 그대로 둔 채</strong>{' '}
-        시각만 앞에서부터 다시 계산합니다.
-      </p>
+      <button type="button" className={s.disclosure} onClick={() => setOpen((o) => !o)}>
+        <span className={s.cardTitle}>시간 일괄 조정</span>
+        <span className={s.disclosureHint}>
+          {open ? '접기' : '교시 수는 그대로 두고 길이만 다시 계산'}
+        </span>
+      </button>
 
-      <div className={s.quickRow}>
-        <label className={s.quickField}>
-          <span>1교시 시작</span>
-          <TimeInput value={firstStart} onChange={mark(setFirstStart)} />
-        </label>
-        <label className={s.quickField}>
-          <span>수업</span>
-          <NumBox value={lesson} onChange={mark(setLesson)} min={5} max={180} unit="분" />
-        </label>
-        <label className={s.quickField}>
-          <span>쉬는 시간</span>
-          <NumBox value={brk} onChange={mark(setBrk)} min={0} max={120} unit="분" />
-        </label>
-        <label className={s.quickField}>
-          <span>중간놀이</span>
-          <NumBox value={otherLen} onChange={mark(setOtherLen)} min={5} max={120} unit="분" />
-        </label>
-        <label className={s.quickField}>
-          <span>점심</span>
-          <NumBox value={lunchLen} onChange={mark(setLunchLen)} min={10} max={180} unit="분" />
-        </label>
-      </div>
+      {open && (
+        <div className={s.quickBody}>
+          <p className={s.subHint}>
+            수업·쉬는 시간·점심·중간놀이 길이를 입력하면{' '}
+            <strong>교시 수와 점심·중간놀이 위치는 그대로 둔 채</strong> 시각만 앞에서부터 다시
+            계산합니다.
+          </p>
 
-      {profiles.length > 1 && (
-        <label className={s.switch}>
-          <input
-            type="checkbox"
-            checked={allProfiles}
-            onChange={(e) => setAllProfiles(e.target.checked)}
-          />
-          <span>모든 시정표 유형 {profiles.length}개에 함께 반영</span>
-        </label>
+          <div className={s.quickRow}>
+            <label className={s.quickField}>
+              <span>1교시 시작</span>
+              <TimeInput value={lengths.firstStart} onChange={(v) => put({ firstStart: v })} />
+            </label>
+            <label className={s.quickField}>
+              <span>수업</span>
+              <NumBox
+                value={lengths.period}
+                onChange={(v) => put({ period: v })}
+                min={5}
+                max={180}
+                unit="분"
+              />
+            </label>
+            <label className={s.quickField}>
+              <span>쉬는 시간</span>
+              <NumBox
+                value={lengths.break}
+                onChange={(v) => put({ break: v })}
+                min={0}
+                max={120}
+                unit="분"
+              />
+            </label>
+            <label className={s.quickField}>
+              <span>중간놀이</span>
+              <NumBox
+                value={lengths.recess}
+                onChange={(v) => put({ recess: v })}
+                min={5}
+                max={120}
+                unit="분"
+              />
+            </label>
+            <label className={s.quickField}>
+              <span>점심</span>
+              <NumBox
+                value={lengths.lunch}
+                onChange={(v) => put({ lunch: v })}
+                min={10}
+                max={180}
+                unit="분"
+              />
+            </label>
+          </div>
+
+          {profiles.length > 1 && (
+            <label className={s.switch}>
+              <input
+                type="checkbox"
+                checked={allProfiles}
+                onChange={(e) => setAllProfiles(e.target.checked)}
+              />
+              <span>모든 시정표 유형 {profiles.length}개에 함께 반영</span>
+            </label>
+          )}
+
+          {error && <Notice tone="danger">{error}</Notice>}
+
+          <div className={s.bulkFoot}>
+            {dirty && (
+              <span className={s.bulkWarn}>
+                저장하지 않은 변경 내용이 있어 일괄 조정을 할 수 없습니다. 먼저 저장하거나 되돌려
+                주세요.
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              disabled={pending || dirty}
+              onClick={() =>
+                onApply(targets, {
+                  firstStartMin: lengths.firstStart,
+                  lessonMinutes: lengths.period,
+                  breakMinutes: lengths.break,
+                  lunchMinutes: lengths.lunch,
+                  otherMinutes: lengths.recess,
+                })
+              }
+            >
+              {pending
+                ? '반영 중…'
+                : allProfiles && profiles.length > 1
+                  ? `${profiles.length}개 유형 전체에 반영`
+                  : '이 유형에 반영'}
+            </Button>
+          </div>
+        </div>
       )}
-
-      {error && <Notice tone="danger">{error}</Notice>}
-
-      <div className={s.bulkFoot}>
-        {dirty && (
-          <span className={s.bulkWarn}>
-            저장하지 않은 변경 내용이 있어 일괄 조정을 할 수 없습니다. 먼저 저장하거나 되돌려 주세요.
-          </span>
-        )}
-        <Button
-          variant="ghost"
-          disabled={pending || dirty}
-          onClick={() =>
-            onApply(targets, {
-              firstStartMin: firstStart,
-              lessonMinutes: lesson,
-              breakMinutes: brk,
-              lunchMinutes: lunchLen,
-              otherMinutes: otherLen,
-            })
-          }
-        >
-          {pending
-            ? '반영 중…'
-            : allProfiles && profiles.length > 1
-              ? `${profiles.length}개 유형 전체에 반영`
-              : '이 유형에 반영'}
-        </Button>
-      </div>
     </section>
   )
-}
-
-/** 지금 저장된 시각에서 수업·쉬는시간·점심·기타 길이를 읽어 낸다. */
-function measure(slots: Slot[]): {
-  firstStart: number
-  lesson: number
-  brk: number
-  lunch: number
-  other: number
-} {
-  const fallback = { firstStart: 9 * 60, lesson: 40, brk: 10, lunch: 50, other: 30 }
-  if (slots.length === 0) return fallback
-
-  const day = slots.reduce((d, x) => Math.min(d, x.dayOfWeek), 7)
-  const rows = slots.filter((x) => x.dayOfWeek === day).sort((a, b) => a.startMin - b.startMin)
-  if (rows.length === 0) return fallback
-
-  const lenOf = (t: Slot['slotType']) => {
-    const r = rows.find((x) => x.slotType === t)
-    return r ? r.endMin - r.startMin : null
-  }
-
-  // 수업과 수업 사이의 빈 시간이 쉬는 시간
-  let brk: number | null = null
-  for (let i = 0; i + 1 < rows.length; i++) {
-    if (rows[i].slotType === 'PERIOD' && rows[i + 1].slotType === 'PERIOD') {
-      brk = rows[i + 1].startMin - rows[i].endMin
-      break
-    }
-  }
-
-  return {
-    firstStart: rows[0].startMin,
-    lesson: lenOf('PERIOD') ?? fallback.lesson,
-    brk: brk ?? fallback.brk,
-    lunch: lenOf('LUNCH') ?? fallback.lunch,
-    other: lenOf('OTHER') ?? fallback.other,
-  }
 }

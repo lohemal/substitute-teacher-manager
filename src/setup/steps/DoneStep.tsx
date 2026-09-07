@@ -18,11 +18,15 @@ export function DoneStep({ nav, state }: StepProps) {
 
   const complete = useMutation({
     mutationFn: setupApi.complete,
-    onSuccess: async () => {
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['app-info'] }),
-        qc.invalidateQueries({ queryKey: ['setup-state'] }),
-      ])
+    onSuccess: (fresh) => {
+      // 서버가 돌려준 상태를 **곧바로** 캐시에 넣는다.
+      //
+      // 다시 물어보고(invalidate) 기다리면, 답이 화면에 반영되기 전에
+      // 아래 navigate 가 먼저 일어날 수 있다. 그러면 라우터가 아직
+      // '설정 미완료'로 보고 시작 화면으로 되돌려 버린다.
+      qc.setQueryData(['setup-state'], fresh)
+      // 버전 정보는 화면 진입을 막지 않으므로 기다리지 않는다
+      void qc.invalidateQueries({ queryKey: ['app-info'] })
       navigate('/find', { replace: true })
     },
   })

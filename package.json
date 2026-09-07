@@ -1,7 +1,7 @@
 {
   "name": "bogyeol",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,8 @@
     "app": "tauri dev",
     "app:build": "tauri build",
     "check:model": "node --experimental-strip-types --no-warnings scripts/check-bell-model.ts && node --experimental-strip-types --no-warnings scripts/check-roster-parse.ts && node --experimental-strip-types --no-warnings scripts/check-class-label.ts && node --experimental-strip-types --no-warnings scripts/check-lesson-grid.ts && node --experimental-strip-types --no-warnings scripts/check-plan-picks.ts && node --experimental-strip-types --no-warnings scripts/check-sort-teachers.ts",
-    "version:set": "node scripts/set-version.mjs"
+    "version:set": "node scripts/set-version.mjs",
+    "app:sandbox": "tauri dev --config src-tauri/tauri.sandbox.conf.json"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.7",

@@ -1,6 +1,7 @@
 import {
   derive, expand, emptyState, toPerDay, toCommon, copyDay,
   addPeriod, addLunch, addRecess, moveRow, canMove, removeRow, rowLabel,
+  DEFAULT_LENGTHS, detectLengths, mergeLengths,
 } from '../src/features/bell/bellModel.ts'
 import { parseTimeText, minToHm } from '../src/lib/time.ts'
 import type { Slot } from '../src/ipc/bell.ts'
@@ -96,8 +97,8 @@ const same = (a: Slot[], b: Slot[]) =>
 {
   let st = emptyState(DAYS)
   check('빈 상태는 공통 모드', st.perDay === false && st.base.length === 0)
-  let rows = addPeriod(st.base)
-  rows = addPeriod(rows)
+  let rows = addPeriod(st.base, DEFAULT_LENGTHS)
+  rows = addPeriod(rows, DEFAULT_LENGTHS)
   check('교시를 추가하면 번호가 1,2로 매겨진다', rows.map((r) => r.periodNo).join() === '1,2')
   check('두 번째 교시는 쉬는시간 뒤에 붙는다', rows[1].startMin === rows[0].endMin + 10, rows)
   const after = removeRow(rows, rows[0].key)
@@ -126,7 +127,7 @@ const labels = (rows: Parameters<typeof rowLabel>[0][]) =>
 
 // 8) 중간놀이를 넣으면 뒤 교시가 밀리고, 지우면 다시 당겨진다
 {
-  let rows = addPeriod(addPeriod(addPeriod([]))) // 09:00-09:40, 09:50-10:30, 10:40-11:20
+  let rows = addPeriod(addPeriod(addPeriod([], DEFAULT_LENGTHS), DEFAULT_LENGTHS), DEFAULT_LENGTHS) // 09:00-09:40, 09:50-10:30, 10:40-11:20
   const before = times(rows)
   check('세 교시가 10분 간격으로 만들어진다', before === '540-580,590-630,640-680', before)
 
@@ -142,7 +143,7 @@ const labels = (rows: Parameters<typeof rowLabel>[0][]) =>
 
 // 9) 점심을 넣어도 뒤가 밀린다
 {
-  let rows = addPeriod(addPeriod(addPeriod(addPeriod([]))))
+  let rows = addPeriod(addPeriod(addPeriod(addPeriod([], DEFAULT_LENGTHS), DEFAULT_LENGTHS), DEFAULT_LENGTHS), DEFAULT_LENGTHS)
   rows = addLunch(rows, 3, 50)
   const st = [...rows].sort((a, b) => a.startMin - b.startMin)
   check('점심이 3교시 뒤에 들어간다', rowLabel(st[3]) === '점심' && st[3].startMin === 680, st[3])
@@ -151,7 +152,7 @@ const labels = (rows: Parameters<typeof rowLabel>[0][]) =>
 
 // 10) 중간놀이 위치 이동 — 바깥 교시 시각은 전혀 바뀌지 않는다
 {
-  let rows = addPeriod(addPeriod(addPeriod(addPeriod([]))))
+  let rows = addPeriod(addPeriod(addPeriod(addPeriod([], DEFAULT_LENGTHS), DEFAULT_LENGTHS), DEFAULT_LENGTHS), DEFAULT_LENGTHS)
   rows = addRecess(rows, 2, 30)
   let st = [...rows].sort((a, b) => a.startMin - b.startMin)
   const recessKey = st.find((r) => r.kind === 'OTHER')!.key
@@ -176,7 +177,7 @@ const labels = (rows: Parameters<typeof rowLabel>[0][]) =>
 
 // 11) 옮길 수 있는 칸 판별
 {
-  let rows = addPeriod(addPeriod([]))
+  let rows = addPeriod(addPeriod([], DEFAULT_LENGTHS), DEFAULT_LENGTHS)
   rows = addRecess(rows, 1, 20)
   const st = [...rows].sort((a, b) => a.startMin - b.startMin)
   const recess = st.find((r) => r.kind === 'OTHER')!
@@ -200,6 +201,76 @@ const labels = (rows: Parameters<typeof rowLabel>[0][]) =>
   check('빈 값 거부', parseTimeText('   ') === null)
   check('글자 거부', parseTimeText('아홉시') === null)
   check('분이 그대로 표시된다', minToHm(580) === '09:40' && minToHm(600) === '10:00')
+}
+
+// 13) 길이의 출처는 하나다 — 일괄 조정에서 정한 값이 [중간놀이 추가]에 그대로 들어간다
+{
+  // 시정표가 비어 있으면 자료에서 읽을 값이 없으므로 기억해 둔 값을 그대로 쓴다
+  const empty = detectLengths([])
+  check(
+    '빈 시정표에서는 읽어 낼 길이가 없다',
+    empty.recess === null && empty.lunch === null && empty.period === null,
+  )
+
+  for (const minutes of [10, 20, 30]) {
+    const remembered = { ...DEFAULT_LENGTHS, recess: minutes }
+    const lengths = mergeLengths([], remembered)
+    check(
+      `중간놀이 ${minutes}분으로 정하면 그 값이 쓰인다`,
+      lengths.recess === minutes,
+    )
+
+    // 화면이 쓰는 값(lengths.recess)으로 넣으면 실제 구간 길이도 같다
+    let rows = addPeriod(addPeriod(addPeriod([], lengths), lengths), lengths)
+    rows = addRecess(rows, 2, lengths.recess)
+    const recess = rows.find((r) => r.kind === 'OTHER')
+    check(
+      `[중간놀이 추가]가 ${minutes}분을 넣는다`,
+      !!recess && recess.endMin - recess.startMin === minutes,
+    )
+
+    // 그 뒤 다시 읽어 내면 같은 값이 나온다 — 단계를 옮겨도 값이 유지된다
+    check(
+      `넣은 뒤 다시 읽어도 ${minutes}분`,
+      detectLengths(rows).recess === minutes,
+    )
+    check(
+      `${minutes}분이 기억해 둔 값을 덮어쓰지 않는다`,
+      mergeLengths(rows, remembered).recess === minutes,
+    )
+  }
+
+  // 자료에 든 값이 있으면 그것을 먼저 쓴다 (시정표를 새로 불러올 때 받아들이는 값)
+  {
+    const lengths = { ...DEFAULT_LENGTHS, recess: 25 }
+    let rows = addPeriod(addPeriod(addPeriod([], lengths), lengths), lengths)
+    rows = addRecess(rows, 2, 15)
+    check(
+      '자료에 15분이 들어 있으면 15분을 받아들인다',
+      mergeLengths(rows, lengths).recess === 15,
+    )
+  }
+
+  // 점심도 같은 규칙
+  for (const minutes of [40, 50, 60]) {
+    const lengths = { ...DEFAULT_LENGTHS, lunch: minutes }
+    let rows = addPeriod(addPeriod(addPeriod(addPeriod([], lengths), lengths), lengths), lengths)
+    rows = addLunch(rows, 3, lengths.lunch)
+    const lunch = rows.find((r) => r.kind === 'LUNCH')
+    check(
+      `[점심시간 추가]가 ${minutes}분을 넣는다`,
+      !!lunch && lunch.endMin - lunch.startMin === minutes,
+    )
+  }
+
+  // 교시 추가도 같은 길이를 따른다
+  {
+    const lengths = { ...DEFAULT_LENGTHS, firstStart: 8 * 60 + 40, period: 45, break: 5 }
+    const rows = addPeriod(addPeriod([], lengths), lengths)
+    check('첫 교시는 정한 시작 시각에서 시작한다', rows[0].startMin === 8 * 60 + 40)
+    check('교시 길이가 정한 값과 같다', rows[0].endMin - rows[0].startMin === 45)
+    check('쉬는 시간이 정한 값과 같다', rows[1].startMin - rows[0].endMin === 5)
+  }
 }
 
 console.log(fails === 0 ? '\nALL OK' : `\n${fails} FAILED`)
