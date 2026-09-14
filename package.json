@@ -1,7 +1,7 @@
 {
   "name": "bogyeol",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "tauri": "tauri",
     "app": "tauri dev",
     "app:build": "tauri build",
-    "check:model": "node --experimental-strip-types --no-warnings scripts/check-bell-model.ts && node --experimental-strip-types --no-warnings scripts/check-roster-parse.ts && node --experimental-strip-types --no-warnings scripts/check-class-label.ts && node --experimental-strip-types --no-warnings scripts/check-lesson-grid.ts && node --experimental-strip-types --no-warnings scripts/check-plan-picks.ts && node --experimental-strip-types --no-warnings scripts/check-sort-teachers.ts && node --experimental-strip-types --no-warnings scripts/check-number-field.ts",
+    "check:model": "node --experimental-strip-types --no-warnings scripts/check-bell-model.ts && node --experimental-strip-types --no-warnings scripts/check-roster-parse.ts && node --experimental-strip-types --no-warnings scripts/check-class-label.ts && node --experimental-strip-types --no-warnings scripts/check-lesson-grid.ts && node --experimental-strip-types --no-warnings scripts/check-plan-picks.ts && node --experimental-strip-types --no-warnings scripts/check-sort-teachers.ts && node --experimental-strip-types --no-warnings scripts/check-number-field.ts && node --experimental-strip-types --no-warnings scripts/check-school-type.ts",
     "version:set": "node scripts/set-version.mjs",
     "app:sandbox": "tauri dev --config src-tauri/tauri.sandbox.conf.json"
   },

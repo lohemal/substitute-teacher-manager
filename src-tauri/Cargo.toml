@@ -1,6 +1,6 @@
 [package]
 name = "bogyeol"
-version = "0.1.6"
+version = "0.1.7"
 description = "보결 배정 시스템"
 authors = ["bogyeol"]
 edition = "2021"

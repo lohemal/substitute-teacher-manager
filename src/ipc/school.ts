@@ -1,6 +1,15 @@
 import { invoke } from './invoke'
 
-export type SchoolType = 'ELEMENTARY' | 'MIDDLE' | 'HIGH'
+// 학교급은 순수 모듈 한 곳에 있다. 부르는 쪽이 바뀌지 않도록 다시 내보낸다.
+export {
+  SCHOOL_TYPE_LABEL,
+  DEFAULT_GRADE_RANGE,
+  CURRENT_SCHOOL_TYPE,
+  isCurrentSchoolType,
+} from '@/lib/schoolType'
+export type { SchoolType } from '@/lib/schoolType'
+
+import type { SchoolType } from '@/lib/schoolType'
 
 export interface ClassCount {
   grade: number
@@ -46,19 +55,6 @@ export interface SchoolInput {
 export interface SchoolView extends SchoolInput {
   termId: number
   termName: string
-}
-
-export const SCHOOL_TYPE_LABEL: Record<SchoolType, string> = {
-  ELEMENTARY: '초등학교',
-  MIDDLE: '중학교',
-  HIGH: '고등학교',
-}
-
-/** 학교 구분별 기본 학년 범위 */
-export const DEFAULT_GRADE_RANGE: Record<SchoolType, [number, number]> = {
-  ELEMENTARY: [1, 6],
-  MIDDLE: [1, 3],
-  HIGH: [1, 3],
 }
 
 export const schoolApi = {

@@ -575,6 +575,44 @@ mod tests {
         assert!(e.user_message.contains("학년도"));
     }
 
+    /// 화면에서는 학교급을 묻지 않지만 **저장 구조는 세 값을 그대로 받는다.**
+    ///
+    /// 이 프로그램은 초등학교용이라 화면에 학교급 선택 칸이 없고 새 설정은
+    /// 늘 `ELEMENTARY` 로 저장된다. 그렇다고 중·고등학교 값을 거부하도록
+    /// 좁히지는 않았다 — 예전 자료를 열지 못하게 되고, 나중에 지원할 때
+    /// 다시 넓혀야 하기 때문이다.
+    #[test]
+    fn 학교급은_세_값을_그대로_받는다() {
+        for t in ["ELEMENTARY", "MIDDLE", "HIGH"] {
+            let c = memory_conn();
+            save(
+                &c,
+                &SchoolInput {
+                    school_type: t.into(),
+                    ..input()
+                },
+            )
+            .unwrap_or_else(|e| panic!("{t} 를 받아야 한다: {}", e.user_message));
+
+            // 다시 읽어도 바뀌지 않는다 — 조용히 초등학교로 고치지 않는다
+            assert_eq!(get(&c).unwrap().unwrap().school_type, t);
+        }
+    }
+
+    #[test]
+    fn 알_수_없는_학교급은_막는다() {
+        let c = memory_conn();
+        let e = save(
+            &c,
+            &SchoolInput {
+                school_type: "UNIVERSITY".into(),
+                ..input()
+            },
+        )
+        .unwrap_err();
+        assert!(e.user_message.contains("학교 구분"), "{}", e.user_message);
+    }
+
     #[test]
     fn 잘못된_입력은_사용자가_이해할_수_있는_문구로_거부한다() {
         let empty_name = SchoolInput { name: "   ".into(), ..input() };

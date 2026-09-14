@@ -129,6 +129,12 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
     );
     println!("  ok   설정         {settings_before}건 → {settings_after}건 (수당 설정 추가)");
 
+    // 지금 자료의 학교 구분 (중·고 자료가 있는지 확인용)
+    let st: String = conn
+        .query_row("SELECT school_type FROM school WHERE id = 1", [], |r| r.get(0))
+        .unwrap_or_else(|_| "(학교 없음)".into());
+    println!("  ok   학교 구분     {st}");
+
     // 새 설정이 기본값으로 들어와 있다
     let cfg = crate::repo::settings::pay_config(&conn).unwrap();
     println!("  ok   수당 설정     1회 {}원 · {}", cfg.per_case, cfg.policy);

@@ -7,7 +7,7 @@ import { errorMessage } from '@/ipc/invoke'
 import {
   DEFAULT_GRADE_RANGE,
   DEFAULT_NAMING,
-  SCHOOL_TYPE_LABEL,
+  CURRENT_SCHOOL_TYPE,
   schoolApi,
   type ClassNaming,
   type SchoolType,
@@ -50,7 +50,7 @@ function emptyForm(): Form {
   for (let g = min; g <= max; g++) counts[g] = 1
   return {
     name: '',
-    schoolType: 'ELEMENTARY',
+    schoolType: CURRENT_SCHOOL_TYPE,
     minGrade: min,
     maxGrade: max,
     schoolDays: [1, 2, 3, 4, 5],
@@ -146,13 +146,6 @@ export function SchoolStep({ nav }: StepProps) {
 
   const patch = (p: Partial<Form>) => setForm((f) => (f ? { ...f, ...p } : f))
 
-  const changeSchoolType = (t: SchoolType) => {
-    const [min, max] = DEFAULT_GRADE_RANGE[t]
-    const counts: Record<number, number> = { ...form.classCounts }
-    for (let g = min; g <= max; g++) counts[g] ??= 1
-    patch({ schoolType: t, minGrade: min, maxGrade: max, classCounts: counts })
-  }
-
   const changeMaxGrade = (max: number) => {
     const counts = { ...form.classCounts }
     for (let g = form.minGrade; g <= max; g++) counts[g] ??= 1
@@ -182,7 +175,7 @@ export function SchoolStep({ nav }: StepProps) {
   return (
     <StepFrame
       title="학교 기본 설정"
-      description="우리 학교 정보를 입력해 주세요. 여기서 만든 학급을 기준으로 시정표와 시간표를 설정하게 됩니다."
+      description="초등학교용 프로그램입니다. 여기서 만든 학급을 기준으로 시정표와 시간표를 설정하게 됩니다."
       footerLeft={<SaveHint status={saveStatus} />}
       footerRight={
         <Button variant="primary" disabled={!canSubmit} onClick={() => save.mutate(form)}>
@@ -205,20 +198,6 @@ export function SchoolStep({ nav }: StepProps) {
           {nameEmpty && <p className={s.warnText}>학교 이름을 입력해야 다음 단계로 넘어갑니다.</p>}
         </Field>
 
-        <Field label="학교 구분">
-          <div className={s.chips}>
-            {(Object.keys(SCHOOL_TYPE_LABEL) as SchoolType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={form.schoolType === t ? `${s.chip} ${s.chipOn}` : s.chip}
-                onClick={() => changeSchoolType(t)}
-              >
-                {SCHOOL_TYPE_LABEL[t]}
-              </button>
-            ))}
-          </div>
-        </Field>
 
         <Field label="학년" hint="마지막 학년까지 표시됩니다">
           <div className={s.inline}>
