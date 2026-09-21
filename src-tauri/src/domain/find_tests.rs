@@ -114,6 +114,8 @@ impl World {
                 absences: vec![],
                 assigned: vec![],
                 settings: EngineSettings::default(),
+                meal_default: None,
+                meal_overrides: HashMap::new(),
             },
             next_teacher: tid,
         }

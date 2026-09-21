@@ -13,6 +13,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
 
+use super::meal::{self, Meal, MealInput};
 use super::time::{fmt_range, Interval};
 
 pub const SLOT_PERIOD: &str = "PERIOD";
@@ -142,6 +143,60 @@ pub struct DaySnapshot {
     pub absences: Vec<AbsenceInfo>,
     pub assigned: Vec<AssignedInfo>,
     pub settings: EngineSettings,
+    /// 학교 기본 식사시간 (이 요일 기준). 아직 정하지 않았으면 `None`
+    pub meal_default: Option<Interval>,
+    /// 전담교사 × 이 요일에 직접 지정한 식사시간
+    pub meal_overrides: HashMap<i64, Interval>,
+}
+
+// ============================================================
+//  전담교사 식사시간
+// ============================================================
+
+/// 이 요일 학교의 점심 구간들. 학년이 달라도 시각이 같으면 하나로 본다.
+pub fn meal_candidates(snap: &DaySnapshot) -> Vec<Interval> {
+    meal::dedup_candidates(
+        snap.slots
+            .iter()
+            .filter(|s| s.day_of_week == snap.day_of_week && s.slot_type == SLOT_LUNCH)
+            .map(|s| Interval::new(s.start_min, s.end_min))
+            .collect(),
+    )
+}
+
+/// 이 교사가 그 날 실제로 하는 수업 시간.
+///
+/// 식사시간을 정할 때는 **직접 입력된 수업만** 본다. 담임 파생 수업·점심
+/// 지도 같은 것은 전담교사에게 없고, 이미 배정된 보결이나 부재는 식사시간이
+/// 아니라 후보 판정에서 따로 걸러진다.
+pub fn teacher_lesson_intervals(snap: &DaySnapshot, teacher_id: i64) -> Vec<Interval> {
+    let class_by_id: HashMap<i64, &ClassInfo> = snap.classes.iter().map(|c| (c.id, c)).collect();
+    snap.lessons
+        .iter()
+        .filter(|l| l.teacher_id == teacher_id)
+        .filter_map(|l| {
+            let cls = class_by_id.get(&l.class_id)?;
+            let slot = find_slot(
+                &snap.slots,
+                cls.grade,
+                snap.day_of_week,
+                SLOT_PERIOD,
+                Some(l.period_no),
+            )?;
+            Some(Interval::new(slot.start_min, slot.end_min))
+        })
+        .collect()
+}
+
+/// 이 교사의 그 날 식사시간을 정한다. **계산해 둔 값을 쓰지 않는다** —
+/// 시정표나 전담 시간표가 바뀌면 다음 조회에서 곧바로 따라온다.
+pub fn resolve_meal(snap: &DaySnapshot, teacher_id: i64) -> Meal {
+    meal::resolve(&MealInput {
+        candidates: meal_candidates(snap),
+        school_default: snap.meal_default,
+        manual: snap.meal_overrides.get(&teacher_id).copied(),
+        lessons: teacher_lesson_intervals(snap, teacher_id),
+    })
 }
 
 // ============================================================

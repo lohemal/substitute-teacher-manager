@@ -62,6 +62,9 @@ const TABLES: &[(&str, &str)] = &[
     ("설정 단계", "setup_steps"),
 ];
 
+/// 이번 업데이트로 **새로 생기는** 것들. 없던 자리에 빈 표가 생기기만 해야 한다.
+const NEW_TABLES: &[(&str, &str)] = &[("전담 식사시간 지정", "teacher_meal_overrides")];
+
 fn count(c: &Connection, table: &str) -> i64 {
     c.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
         .unwrap_or(-1)
@@ -88,8 +91,9 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
     let was = migrate::current_version(&conn).unwrap();
     println!("복사본 스키마 버전 v{was} → 최신 v{}", migrate::latest_version());
 
-    // 보결 수당 마이그레이션(v4) 직전 상태로 되돌려, 실제 업그레이드를 재현한다.
-    // 이미 v4 이상이어도 004 는 INSERT OR IGNORE 이므로 몇 번 돌려도 같다.
+    // 실제 업그레이드를 재현하려고 예전 버전으로 되돌린 뒤 다시 올린다.
+    // 004 는 INSERT OR IGNORE, 005 는 CREATE TABLE IF NOT EXISTS 라서
+    // 몇 번 돌려도 결과가 같다.
     conn.pragma_update(None, "user_version", 3).unwrap();
 
     let before: Vec<(String, i64, String)> = TABLES
@@ -97,6 +101,7 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
         .map(|(ko, t)| ((*ko).to_string(), count(&conn, t), fingerprint(&conn, t)))
         .collect();
     let settings_before = count(&conn, "settings");
+    let before_new: Vec<(&str, i64)> = NEW_TABLES.iter().map(|(_, t)| (*t, count(&conn, t))).collect();
 
     migrate::run(&mut conn, &path).expect("마이그레이션이 실패하면 안 된다");
 
@@ -118,7 +123,10 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
             *fp_before, fp_after,
             "{ko}({t}) 내용이 달라졌다"
         );
-        println!("  ok   {ko:<12} {n_after}건 (내용 동일)");
+        println!(
+            "  ok   {ko:<12} {n_after}건{}",
+            if n_after == 0 { "" } else { " (내용 동일)" }
+        );
     }
 
     // 설정은 두 줄만 늘어난다 (이미 있었다면 그대로)
@@ -134,6 +142,34 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
         .query_row("SELECT school_type FROM school WHERE id = 1", [], |r| r.get(0))
         .unwrap_or_else(|_| "(학교 없음)".into());
     println!("  ok   학교 구분     {st}");
+
+    // 새로 생기는 표 — 없던 것에서 빈 표로. 기존 자료를 건드리지 않는다.
+    for (ko, t) in NEW_TABLES {
+        let before = before_new
+            .iter()
+            .find(|(n, _)| n == t)
+            .map(|(_, c)| *c)
+            .unwrap_or(-1);
+        let after = count(&conn, t);
+        assert_eq!(before, -1, "{ko}({t}) 는 예전 자료에 없어야 한다");
+        assert_eq!(after, 0, "{ko}({t}) 는 빈 표로 생겨야 한다");
+        println!("  ok   {ko:<12} 새로 생김 (0건)");
+    }
+
+    // 전담교사 식사시간 — 업데이트 직후에는 아무것도 정해지지 않은 상태여야 한다
+    let patterns = crate::repo::meal::patterns(&conn).unwrap();
+    let meal_default = crate::repo::meal::default_bell_id(&conn).unwrap();
+    println!(
+        "  ok   식사시간     점심 패턴 {}가지 · 학교 기본 {}",
+        patterns.len(),
+        match meal_default {
+            Some(id) => format!("시정표 {id}"),
+            None => "아직 정하지 않음".to_string(),
+        }
+    );
+    for p in &patterns {
+        println!("         · {} {}", p.grade_label, p.time_label);
+    }
 
     // 새 설정이 기본값으로 들어와 있다
     let cfg = crate::repo::settings::pay_config(&conn).unwrap();

@@ -10,11 +10,13 @@
 //! - `assign`   : STEP 3 배정 직전 재검증 · 하루 일괄 보결 대상 찾기
 //! - `period`   : 오늘/주/월/학기를 실제 날짜 범위로
 //! - `fairness` : 보결이 쏠렸는지 참고로 살펴보기 (판정하지 않는다)
+//! - `meal`     : 전담교사 식사시간 — 일반 보결에만 걸리는 제약 (점심 보결은 그대로)
 //! - `pay`      : 남은 배정 기록으로 보결 수당 계산 (배정에는 끼어들지 않는다)
 
 pub mod assign;
 pub mod fairness;
 pub mod find;
+pub mod meal;
 pub mod pay;
 pub mod period;
 pub mod priority;
@@ -28,6 +30,14 @@ mod assign_tests;
 #[cfg(test)]
 #[path = "find_tests.rs"]
 mod find_tests;
+
+#[cfg(test)]
+#[path = "meal_tests.rs"]
+mod meal_tests;
+
+#[cfg(test)]
+#[path = "meal_find_tests.rs"]
+mod meal_find_tests;
 
 #[cfg(test)]
 #[path = "pay_tests.rs"]

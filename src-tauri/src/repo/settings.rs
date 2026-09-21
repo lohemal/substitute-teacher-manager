@@ -33,6 +33,13 @@ pub const SUB_PAY_POLICY: &str = "sub_pay_policy";
 /// 1회 보결 수당의 상한. 오타로 0을 더 붙였을 때를 막는 정도의 값이다.
 pub const SUB_PAY_MAX: i64 = 1_000_000;
 
+// ---------- 전담교사 식사시간 ----------
+//
+// 시각을 적어 두지 않고 **어느 시정표의 점심시간에 함께 먹는가**를 가리킨다.
+// 그래야 시정표를 고쳤을 때 식사시간도 따라 바뀌고, 요일마다 점심시간이 다른
+// 학교도 그대로 맞는다. 0 이면 아직 정하지 않은 것이다.
+pub const MEAL_DEFAULT_BELL: &str = "meal_default_bell_id";
+
 // ---------- 자동 백업 ----------
 pub const AUTO_BACKUP_MODE: &str = "auto_backup_mode";
 pub const AUTO_BACKUP_KEEP: &str = "auto_backup_keep";
@@ -121,6 +128,10 @@ pub fn get_int(conn: &Connection, key: &str, default: i64) -> AppResult<i64> {
         })
         .optional()?;
     Ok(raw.and_then(|v| v.trim().parse::<i64>().ok()).unwrap_or(default))
+}
+
+pub fn put_int(conn: &Connection, key: &str, v: i64) -> AppResult<()> {
+    put(conn, key, &v.to_string())
 }
 
 fn put(conn: &Connection, key: &str, value_json: &str) -> AppResult<()> {

@@ -207,6 +207,10 @@ pub fn snapshot(conn: &Connection, date: &str) -> AppResult<DaySnapshot> {
         absences,
         assigned,
         settings: load_settings(conn)?,
+        // 전담교사 식사시간에 필요한 두 가지. 자동 판정 결과가 아니라
+        // **사람이 정한 값**만 읽어 온다 (판정은 domain 이 그때그때 한다).
+        meal_default: super::meal::default_window(conn, day_of_week)?,
+        meal_overrides: super::meal::overrides_for_day(conn, day_of_week)?,
     })
 }
 

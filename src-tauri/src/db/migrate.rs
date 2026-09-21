@@ -41,6 +41,11 @@ const MIGRATIONS: &[Migration] = &[
         name: "004_sub_pay",
         sql: include_str!("../../migrations/004_sub_pay.sql"),
     },
+    Migration {
+        version: 5,
+        name: "005_special_meal",
+        sql: include_str!("../../migrations/005_special_meal.sql"),
+    },
 ];
 
 pub fn latest_version() -> i32 {

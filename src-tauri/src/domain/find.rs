@@ -12,9 +12,10 @@ use std::collections::HashMap;
 
 use serde::Serialize;
 
+use super::meal::Meal;
 use super::schedule::{
-    build_busy_index, find_slot, BusyKind, ClassInfo, DaySnapshot, SlotInfo, TeacherInfo,
-    ROLE_HOMEROOM, ROLE_SPECIAL, SLOT_LUNCH, SLOT_PERIOD,
+    build_busy_index, find_slot, resolve_meal, BusyKind, ClassInfo, DaySnapshot, SlotInfo,
+    TeacherInfo, ROLE_HOMEROOM, ROLE_SPECIAL, SLOT_LUNCH, SLOT_PERIOD,
 };
 use super::time::{fmt_range, Interval};
 
@@ -33,6 +34,10 @@ pub const EXCLUDED_LUNCH_DUTY: &str = "EXCLUDED_LUNCH_DUTY";
 pub const EXCLUDED_RECESS_DUTY: &str = "EXCLUDED_RECESS_DUTY";
 pub const EXCLUDED_FIXED_DUTY: &str = "EXCLUDED_FIXED_DUTY";
 pub const EXCLUDED_NO_SUB_BLOCK: &str = "EXCLUDED_NO_SUB_BLOCK";
+
+/// 전담교사 식사시간과 겹친다. **일반 수업 보결에만 걸린다** —
+/// 전담교사는 자기 식사시간에도 점심 보결은 맡을 수 있다.
+pub const EXCLUDED_SPECIAL_MEAL: &str = "EXCLUDED_SPECIAL_MEAL";
 
 // 학교가 설정으로 끈 경우 — 시간은 비어 있지만 방침상 부르지 않는다
 pub const EXCLUDED_BY_OPTION_SPECIAL: &str = "EXCLUDED_BY_OPTION_SPECIAL";
@@ -60,6 +65,7 @@ pub fn status_label(code: &str) -> &'static str {
         EXCLUDED_RECESS_DUTY => "중간놀이 지도",
         EXCLUDED_FIXED_DUTY => "다른 일정 있음",
         EXCLUDED_NO_SUB_BLOCK => "보결 배정 불가 시간",
+        EXCLUDED_SPECIAL_MEAL => "식사시간",
         EXCLUDED_BY_OPTION_SPECIAL => "설정: 전담 제외",
         EXCLUDED_BY_OPTION_OTHER_GRADE => "설정: 다른 학년 담임 제외",
         EXCLUDED_BY_OPTION_AFTER_END => "설정: 수업 끝난 담임 제외",
@@ -536,6 +542,18 @@ pub fn find_candidates(
     let target = Interval::new(slot.start_min, slot.end_min);
     let idx = build_busy_index(snap);
 
+    // 전담교사 식사시간은 **일반 수업 보결**에만 적용한다.
+    let is_general_period = slot.slot_type != SLOT_LUNCH;
+    let meals: HashMap<i64, Meal> = if is_general_period {
+        snap.teachers
+            .iter()
+            .filter(|t| t.role_code == ROLE_SPECIAL)
+            .map(|t| (t.id, resolve_meal(snap, t.id)))
+            .collect()
+    } else {
+        HashMap::new()
+    };
+
     let mut eligible: Vec<Candidate> = Vec::new();
     let mut excluded: Vec<Candidate> = Vec::new();
 
@@ -608,6 +626,28 @@ pub fn find_candidates(
             continue;
         }
 
+        // ---- 전담교사 식사시간 ----
+        //
+        // 전담교사도 밥을 먹어야 하므로 그 시간에는 **일반 수업 보결**을
+        // 맡길 수 없다. 다만 **점심 보결은 맡을 수 있다** — 그래서 이것을
+        // 바쁜 시간(BusyBlock)으로 만들지 않고 여기서 대상 종류를 보고
+        // 판단한다.
+        //
+        // 설정으로 끄고 켜는 것이 아니라 사실의 문제이므로 hard filter 다.
+        // 식사시간을 **알 수 없을 때는 빼지 않는다** — 모르면서 빼면 배정할
+        // 사람이 없어지고, 왜 없는지도 알 수 없다. 대신 아래에서 알려 준다.
+        if is_general_period && t.role_code == ROLE_SPECIAL {
+            if let Some(m) = meals.get(&t.id).and_then(|m| m.interval()) {
+                if m.overlaps(&target) {
+                    excluded.push(make(
+                        EXCLUDED_SPECIAL_MEAL,
+                        Some(format!("식사시간 {}", fmt_range(&m))),
+                    ));
+                    continue;
+                }
+            }
+        }
+
         // ---- 학교가 설정으로 끈 경우 ----
         // 시간은 비어 있지만 방침상 부르지 않는 사람이다. 시간 충돌과 달리
         // 학교가 정하는 것이므로, 왜 빠졌는지 설정 이름과 함께 알려 준다.
@@ -652,6 +692,26 @@ pub fn find_candidates(
                 .to_string(),
         );
     }
+    // 식사시간을 정하지 못한 전담이 후보에 남아 있으면 알려 준다.
+    // 그 사람은 지금 **식사시간을 무시한 채** 후보에 들어와 있다.
+    {
+        let mut unsure: Vec<(&str, &str)> = Vec::new();
+        for c in &eligible {
+            if let Some(Meal::Unknown(why)) = meals.get(&c.teacher_id) {
+                unsure.push((c.name.as_str(), why.message()));
+            }
+        }
+        if !unsure.is_empty() {
+            let names: Vec<&str> = unsure.iter().map(|(n, _)| *n).collect();
+            let why = unsure[0].1;
+            warnings.push(format!(
+                "{} 선생님의 식사시간을 정하지 못해 식사시간을 빼고 판단했습니다. {}. (시간표 관리 → 전담교사 시간표)",
+                names.join(", "),
+                why
+            ));
+        }
+    }
+
     if snap
         .classes
         .iter()

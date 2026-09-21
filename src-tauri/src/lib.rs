@@ -123,6 +123,10 @@ pub fn run() {
             commands::assign_history,
             // 보결 현황
             commands::stats_view,
+            // 전담교사 식사시간 — 사람이 정한 값만 저장한다
+            commands::meal_view,
+            commands::meal_set_default,
+            commands::meal_set_override,
             // 보결 수당 — 기록을 집계만 한다 (읽기 전용)
             commands::pay_view,
             commands::pay_detail,

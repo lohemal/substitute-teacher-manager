@@ -48,6 +48,8 @@ fn open_copy() -> Option<Connection> {
         backup.run_to_completion(200, std::time::Duration::ZERO, None).ok()?;
     }
     copy.pragma_update(None, "foreign_keys", "ON").ok()?;
+    // 앱이 열 때와 같게 최신 구조로 올린다 (복사본에만).
+    crate::db::migrate::run(&mut copy, &dst).ok()?;
     Some(copy)
 }
 
@@ -312,18 +314,25 @@ fn real_db_시나리오_전체() {
         if let Some((l, own, target_class, p, target)) = found {
             let r = ctx.find(target_class, SLOT_PERIOD, Some(p));
             let (ok, code) = ctx.verdict(&r, l.teacher_id);
+            // 여기서 확인하려는 것은 하나다 — **교시 번호가 같다는 이유로**
+            // 빠지지 않는다. 전담교사 식사시간처럼 다른 사실 때문에 빠지는
+            // 것은 별개이고, 그것은 그것대로 맞는 판정이다.
             assert!(
-                ok,
-                "{} 선생님은 {}교시지만 시각이 달라 후보여야 한다 ({} vs {})",
+                ok || (code != EXCLUDED_SPECIAL_LESSON && code != EXCLUDED_REGULAR_CLASS),
+                "{} 선생님은 {}교시지만 시각이 달라 수업 중으로 빠지면 안 된다 ({} vs {}, 지금 {code})",
                 ctx.name_of(l.teacher_id),
                 p,
                 fmt_range(&Interval::new(own.0, own.1)),
                 fmt_range(&Interval::new(target.0, target.1))
             );
             pass(
-                "같은 교시 번호라도 시각이 다르면 후보 포함",
+                if ok {
+                    "같은 교시 번호라도 시각이 다르면 후보 포함"
+                } else {
+                    "같은 교시 번호는 빠지는 이유가 아니다 (다른 사실로 빠짐)"
+                },
                 &format!(
-                    "{} 선생님: {} {}교시 {} / 보결 {} {}교시 {} → 후보 ({})",
+                    "{} 선생님: {} {}교시 {} / 보결 {} {}교시 {} → {} ({})",
                     ctx.name_of(l.teacher_id),
                     ctx.label(l.class_id),
                     p,
@@ -331,6 +340,7 @@ fn real_db_시나리오_전체() {
                     ctx.label(target_class),
                     p,
                     fmt_range(&Interval::new(target.0, target.1)),
+                    if ok { "후보" } else { "제외" },
                     code
                 ),
             );

@@ -13,6 +13,7 @@ import {
   type TeacherLessons,
 } from '@/ipc/lesson'
 import { LessonCellEditor, type CellTarget, type CellValue } from './LessonCellEditor'
+import { MealCard } from './MealCard'
 import { PasteGridModal } from './PasteGridModal'
 import s from './LessonEditor.module.css'
 
@@ -308,6 +309,9 @@ export function LessonEditor() {
             빈 칸을 눌러 수업을 넣고, 채워진 칸을 눌러 고치거나 지웁니다. 시각은 그 학급 학년의
             시정표에서 자동으로 정해집니다.
           </p>
+
+          {/* 전담 선생님이 일반 보결을 맡지 않는 시간 */}
+          <MealCard teacherId={teacherId} />
         </section>
       </div>
 

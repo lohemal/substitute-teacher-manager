@@ -8,6 +8,7 @@ pub mod bell;
 pub mod export;
 pub mod find;
 pub mod lesson;
+pub mod meal;
 pub mod pay;
 pub mod priority;
 pub mod school;
