@@ -14,8 +14,8 @@ use serde::Serialize;
 
 use super::meal::Meal;
 use super::schedule::{
-    build_busy_index, find_slot, resolve_meal, BusyKind, ClassInfo, DaySnapshot, SlotInfo,
-    TeacherInfo, ROLE_HOMEROOM, ROLE_SPECIAL, SLOT_LUNCH, SLOT_PERIOD,
+    build_busy_index, find_slot, homeroom_lunch_intervals, resolve_meal, BusyKind, ClassInfo,
+    DaySnapshot, SlotInfo, TeacherInfo, ROLE_HOMEROOM, ROLE_SPECIAL, SLOT_LUNCH, SLOT_PERIOD,
 };
 use super::time::{fmt_range, Interval};
 
@@ -38,6 +38,17 @@ pub const EXCLUDED_NO_SUB_BLOCK: &str = "EXCLUDED_NO_SUB_BLOCK";
 /// 전담교사 식사시간과 겹친다. **일반 수업 보결에만 걸린다** —
 /// 전담교사는 자기 식사시간에도 점심 보결은 맡을 수 있다.
 pub const EXCLUDED_SPECIAL_MEAL: &str = "EXCLUDED_SPECIAL_MEAL";
+
+// ---- 점심 보결의 담임 판정 (v0.1.9) ----
+//
+// 셋 다 **점심 보결에만** 걸린다. 일반 수업 보결은 예전 그대로다.
+
+/// 학교가 점심 보결에 담임을 부르지 않기로 해 두었다.
+pub const EXCLUDED_HOMEROOM_LUNCH_POLICY: &str = "EXCLUDED_HOMEROOM_LUNCH_POLICY";
+/// 부를 수는 있지만, 자기 학년 점심시간과 실제로 겹친다.
+pub const EXCLUDED_HOMEROOM_OWN_LUNCH: &str = "EXCLUDED_HOMEROOM_OWN_LUNCH";
+/// 자기 학년 점심시간을 알 수 없다. 모르면 부르지 않는다.
+pub const EXCLUDED_HOMEROOM_LUNCH_UNKNOWN: &str = "EXCLUDED_HOMEROOM_LUNCH_UNKNOWN";
 
 // 학교가 설정으로 끈 경우 — 시간은 비어 있지만 방침상 부르지 않는다
 pub const EXCLUDED_BY_OPTION_SPECIAL: &str = "EXCLUDED_BY_OPTION_SPECIAL";
@@ -66,6 +77,9 @@ pub fn status_label(code: &str) -> &'static str {
         EXCLUDED_FIXED_DUTY => "다른 일정 있음",
         EXCLUDED_NO_SUB_BLOCK => "보결 배정 불가 시간",
         EXCLUDED_SPECIAL_MEAL => "식사시간",
+        EXCLUDED_HOMEROOM_LUNCH_POLICY => "담임교사는 점심 보결 대상에서 제외됨",
+        EXCLUDED_HOMEROOM_OWN_LUNCH => "자기 학년 점심시간과 겹침",
+        EXCLUDED_HOMEROOM_LUNCH_UNKNOWN => "자기 학년 점심시간을 확인할 수 없음",
         EXCLUDED_BY_OPTION_SPECIAL => "설정: 전담 제외",
         EXCLUDED_BY_OPTION_OTHER_GRADE => "설정: 다른 학년 담임 제외",
         EXCLUDED_BY_OPTION_AFTER_END => "설정: 수업 끝난 담임 제외",
@@ -645,6 +659,53 @@ pub fn find_candidates(
                     ));
                     continue;
                 }
+            }
+        }
+
+        // ---- 점심 보결의 담임 ----
+        //
+        // 전담교사 식사시간(바로 위)과 짝을 이루는 규칙이다. 저쪽은 일반
+        // 수업 보결에만, 이쪽은 **점심 보결에만** 걸린다.
+        //
+        // 학교마다 다르다. 점심 보결에 담임을 아예 부르지 않는 학교가 있고,
+        // 점심시간이 다른 학년끼리 서로 맡아 주는 학교가 있다. 그래서 켜고
+        // 끄는 설정으로 두되, 켜도 **무조건 허용하지는 않는다** — 자기 학년
+        // 점심시간과 실제로 겹치면 그 사람은 그때 급식 지도 중이다.
+        //
+        // 학년 묶음(저학년·고학년)으로 가르지 않는다. 실제 학교에는 점심
+        // 패턴이 셋 이상이고 서로 조금씩 겹친다. 시각으로만 판단한다.
+        if slot.slot_type == SLOT_LUNCH && t.role_code == ROLE_HOMEROOM {
+            if !snap.settings.include_cross_lunch_homeroom {
+                excluded.push(make(
+                    EXCLUDED_HOMEROOM_LUNCH_POLICY,
+                    Some(
+                        "설정에서 점심 보결에 담임 선생님을 넣지 않도록 해 두었습니다".to_string(),
+                    ),
+                ));
+                continue;
+            }
+
+            let own = homeroom_lunch_intervals(snap, t.id);
+
+            // 모르면 부르지 않는다. '아마 안 겹칠 것'이라고 넘겨짚으면
+            // 급식 지도 중인 선생님을 다른 반에 보내게 된다.
+            if own.is_empty() {
+                excluded.push(make(
+                    EXCLUDED_HOMEROOM_LUNCH_UNKNOWN,
+                    Some(
+                        "맡은 학급의 이 요일 점심시간이 시정표에 없어 겹치는지 알 수 없습니다"
+                            .to_string(),
+                    ),
+                ));
+                continue;
+            }
+
+            if let Some(hit) = own.iter().find(|iv| iv.overlaps(&target)) {
+                excluded.push(make(
+                    EXCLUDED_HOMEROOM_OWN_LUNCH,
+                    Some(format!("자기 학년 점심 {}", fmt_range(hit))),
+                ));
+                continue;
             }
         }
 

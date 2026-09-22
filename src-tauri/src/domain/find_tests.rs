@@ -777,14 +777,50 @@ fn 담임_미지정_학급이_있으면_알려준다() {
     assert!(r.warnings.iter().any(|m| m.contains("담임이 지정되지 않아")), "{:?}", r.warnings);
 }
 
+/// 급식 지도 설정은 **일반 수업 보결**에서 계속 제 일을 한다.
+///
+/// 이 설정이 만드는 것은 담임의 자기 학년 점심 구간이라는 '바쁜 시간'이다.
+/// 학년마다 점심 시각이 다르므로, 그 구간은 **다른 학년의 교시**와 겹칠 수
+/// 있다. 여기서 보는 것이 그 경우다. (v0.1.9 에서 들어온 점심 보결 정책과는
+/// 별개다 — 그쪽은 대상이 점심 보결일 때만 본다.)
 #[test]
-fn 설정을_끄면_점심에_담임을_빼지_않는다() {
+fn 급식_지도_설정은_다른_학년_교시_보결에서_그대로_작동한다() {
+    // 3학년 점심 11:10~12:00 · 5학년 4교시 11:15~11:55 — 서로 겹친다
+    let w = World::new(1);
+    let r = w.find(5, "가람", 4);
+    assert_eq!((r.slot.start_min, r.slot.end_min), (hm(11, 15), hm(11, 55)));
+    let lunching = w.homeroom_of(3, "나리");
+    assert!(
+        !is_eligible(&r, lunching),
+        "그 시간에 자기 반 급식 지도 중인 담임은 부르지 않는다"
+    );
+
     let mut w = World::new(1);
     w.snap.settings.exclude_homeroom_on_own_lunch = false;
+    assert!(
+        is_eligible(&w.find(5, "가람", 4), lunching),
+        "끄면 그 시간이 비는 것으로 본다"
+    );
+}
 
-    let r = w.find_lunch(5, "가람");
-    let same = w.homeroom_of(5, "나리");
-    assert!(is_eligible(&r, same), "설정을 끄면 점심에도 후보가 된다");
+/// **점심 보결**에서는 이야기가 다르다 (v0.1.9).
+///
+/// 급식 지도 설정을 꺼도 담임이 자기 점심 보결에 들어가지는 않는다.
+/// 점심 보결에 담임을 부를지는 이제 별도의 학교 설정이 정하고, 그 설정을
+/// 켜더라도 **자기 학년 점심시간과 겹치면** 후보가 아니다.
+#[test]
+fn 점심_보결에는_어떤_설정이든_같은_점심시간_담임이_들어가지_않는다() {
+    let same_lunch = World::new(1).homeroom_of(5, "나리");
+
+    for (duty, cross) in [(true, false), (false, false), (true, true), (false, true)] {
+        let mut w = World::new(1);
+        w.snap.settings.exclude_homeroom_on_own_lunch = duty;
+        w.snap.settings.include_cross_lunch_homeroom = cross;
+        assert!(
+            !is_eligible(&w.find_lunch(5, "가람"), same_lunch),
+            "급식 지도 {duty} · 점심 보결 담임 {cross} 에서도 들어가면 안 된다"
+        );
+    }
 }
 
 // ============================================================

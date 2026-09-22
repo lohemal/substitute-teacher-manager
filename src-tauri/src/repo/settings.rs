@@ -22,6 +22,8 @@ pub const EXCLUDE_RECESS: &str = "exclude_homeroom_on_recess";
 pub const INCLUDE_SPECIAL: &str = "include_special_teachers";
 pub const INCLUDE_AFTER_END: &str = "include_after_school_end";
 pub const INCLUDE_OTHER_GRADE: &str = "include_other_grade_homeroom";
+/// 점심 보결에 담임을 부를지. 기본은 끔 — 학교가 명시적으로 허용해야 한다.
+pub const INCLUDE_CROSS_LUNCH: &str = "include_cross_lunch_homeroom";
 
 // ---------- 보결 수당 ----------
 //
@@ -63,6 +65,12 @@ pub const ENGINE_OPTIONS: &[OptionDef] = &[
         label: "점심시간에는 그 학년 담임을 부르지 않기",
         hint: "담임이 자기 반 급식 지도를 하는 학교에서 켜 둡니다. 끄면 점심시간에도 담임이 후보로 나옵니다.",
         default: true,
+    },
+    OptionDef {
+        key: INCLUDE_CROSS_LUNCH,
+        label: "점심 보결에 다른 점심시간의 담임도 넣기",
+        hint: "학년마다 점심시간이 다른 학교에서, 아직 밥을 먹지 않았거나 이미 먹은 담임에게 점심 보결을 맡기는 경우 켜세요. 켜도 자기 학년 점심시간과 시각이 겹치는 담임은 후보가 되지 않습니다. 꺼 두면 점심 보결에 담임이 나오지 않습니다.",
+        default: false,
     },
     OptionDef {
         key: EXCLUDE_RECESS,

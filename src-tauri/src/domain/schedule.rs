@@ -116,6 +116,12 @@ pub struct EngineSettings {
     pub include_after_school_end: bool,
     /// 다른 학년 담임을 후보에 넣을지
     pub include_other_grade_homeroom: bool,
+    /// **점심 보결**에 담임을 부를지.
+    ///
+    /// 꺼 두면 점심 보결에는 담임이 아예 나오지 않는다. 켜면 자기 학년
+    /// 점심시간과 **실제로 겹치지 않는** 담임만 후보가 된다 — 학년 묶음이
+    /// 아니라 시각으로 가른다.
+    pub include_cross_lunch_homeroom: bool,
 }
 
 impl Default for EngineSettings {
@@ -127,6 +133,8 @@ impl Default for EngineSettings {
             include_special_teachers: true,
             include_after_school_end: true,
             include_other_grade_homeroom: true,
+            // 학교가 명시적으로 켜기 전에는 점심 보결에 담임을 부르지 않는다.
+            include_cross_lunch_homeroom: false,
         }
     }
 }
@@ -197,6 +205,37 @@ pub fn resolve_meal(snap: &DaySnapshot, teacher_id: i64) -> Meal {
         manual: snap.meal_overrides.get(&teacher_id).copied(),
         lessons: teacher_lesson_intervals(snap, teacher_id),
     })
+}
+
+// ============================================================
+//  담임교사 자기 학년 점심시간
+// ============================================================
+
+/// 이 담임교사가 맡은 학급들의 **그 요일 실제 점심시간**.
+///
+/// 점심 보결에 다른 학년 담임을 부를 수 있는 학교에서, 그 담임이 정말 비어
+/// 있는지 가르는 기준이다. 저학년·고학년 같은 학년 묶음은 쓰지 않는다 —
+/// 실제 학교에는 점심 패턴이 셋 이상일 수 있고, 요일마다 다를 수도 있다.
+/// 그래서 **그 학년 시정표의 점심 구간**만 본다.
+///
+/// 담임 한 사람이 여러 학급을 맡을 수 있으므로 여럿이 나올 수 있다.
+/// 하나도 못 찾으면 빈 목록이다 — 그때는 **추측하지 말고** 부르는 쪽에서
+/// 후보에서 빼야 한다.
+///
+/// 식사시간(`meal`)과는 계산만 닮았을 뿐 다른 개념이다. 이것은 담임이 자기
+/// 반 급식을 지도하는 학급 시간이고, 저쪽은 전담교사 개인이 밥 먹는 시간이다.
+pub fn homeroom_lunch_intervals(snap: &DaySnapshot, teacher_id: i64) -> Vec<Interval> {
+    let mut out: Vec<Interval> = snap
+        .classes
+        .iter()
+        .filter(|c| c.homeroom_teacher_id == Some(teacher_id))
+        .filter_map(|c| find_slot(&snap.slots, c.grade, snap.day_of_week, SLOT_LUNCH, None))
+        .map(|s| Interval::new(s.start_min, s.end_min))
+        .collect();
+    // 여러 학급을 맡아도 시각이 같으면 한 번만 보여 준다
+    out.sort_by_key(|i| (i.start, i.end));
+    out.dedup();
+    out
 }
 
 // ============================================================

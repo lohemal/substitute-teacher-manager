@@ -34,6 +34,9 @@ fn load_settings(conn: &Connection) -> AppResult<EngineSettings> {
         include_special_teachers: st::get_bool(conn, st::INCLUDE_SPECIAL, true)?,
         include_after_school_end: st::get_bool(conn, st::INCLUDE_AFTER_END, true)?,
         include_other_grade_homeroom: st::get_bool(conn, st::INCLUDE_OTHER_GRADE, true)?,
+        // 값이 없는 예전 자료에서는 꺼진 것으로 읽는다 — migration 없이
+        // 기존 학교가 점심 보결에 담임을 갑자기 받는 일이 없다.
+        include_cross_lunch_homeroom: st::get_bool(conn, st::INCLUDE_CROSS_LUNCH, false)?,
     })
 }
 

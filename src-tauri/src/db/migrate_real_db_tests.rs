@@ -9,7 +9,7 @@
 //!
 //! 자료가 없는 컴퓨터(예: CI)에서는 조용히 지나간다.
 
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 
 use super::migrate;
 
@@ -169,6 +169,25 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
     );
     for p in &patterns {
         println!("         · {} {}", p.grade_label, p.time_label);
+    }
+
+    // 점심 보결의 담임 정책 — 예전 자료에는 이 key 자체가 없다. 업데이트
+    // 직후 학교가 모르는 사이에 담임이 점심 보결 후보로 나오면 안 되므로,
+    // 값이 없으면 **꺼진 것**으로 읽혀야 한다.
+    {
+        use crate::repo::settings as st;
+        let stored: Option<String> = conn
+            .query_row(
+                "SELECT value_json FROM settings WHERE key = ?1",
+                [st::INCLUDE_CROSS_LUNCH],
+                |r| r.get(0),
+            )
+            .optional()
+            .unwrap();
+        let effective = st::get_bool(&conn, st::INCLUDE_CROSS_LUNCH, false).unwrap();
+        assert_eq!(stored, None, "마이그레이션이 이 설정을 만들지 않아야 한다");
+        assert!(!effective, "값이 없으면 꺼진 것으로 읽어야 한다");
+        println!("  ok   점심 보결 담임  저장된 값 없음 → 꺼짐 (기본값)");
     }
 
     // 새 설정이 기본값으로 들어와 있다

@@ -203,10 +203,15 @@ fn 여러_옵션을_함께_꺼도_각각_이유를_알려준다() {
     assert_eq!(why(&c, 6, "김일가"), "EXCLUDED_BY_OPTION_OTHER_GRADE");
 }
 
+/// 점심 보결에서 담임이 빠지는 이유를 세 단계로 따라가 본다.
+///
+/// 대상은 5학년 점심이고 '이오가' 가 그 반 담임이다 — 같은 시간에 자기 반
+/// 급식을 지도한다. 어떤 설정이든 이 사람은 후보가 될 수 없고, 다만 **왜**
+/// 빠졌는지가 달라진다.
 #[test]
-fn 점심_담임_제외를_끄면_점심에도_담임이_나온다() {
+fn 점심_보결에서_담임이_빠지는_이유가_설정에_따라_달라진다() {
     let c = school();
-    let lunch = |conn: &Connection| {
+    let why_lunch = |conn: &Connection| {
         let snap = repo_find::snapshot(conn, MON).unwrap();
         let counts = repo_find::counts(conn, MON).unwrap();
         let r = find_candidates(
@@ -220,12 +225,67 @@ fn 점심_담임_제외를_끄면_점심에도_담임이_나온다() {
             &counts,
         )
         .unwrap();
+        assert!(
+            !r.eligible.iter().any(|x| x.name == "이오가"),
+            "자기 반 점심 보결에는 어떤 설정으로도 들어갈 수 없다"
+        );
+        r.excluded
+            .iter()
+            .find(|x| x.name == "이오가")
+            .unwrap()
+            .reason_code
+            .clone()
+    };
+
+    // 1) 기본 — 자기 반 급식 지도 중
+    assert_eq!(why_lunch(&c), "EXCLUDED_LUNCH_DUTY");
+
+    // 2) 급식 지도 설정을 꺼도, 점심 보결에 담임을 넣는 설정이 기본으로
+    //    꺼져 있으므로 여전히 빠진다. (예전 자료에는 이 key 자체가 없다)
+    set(&c, st::EXCLUDE_LUNCH, false);
+    assert_eq!(why_lunch(&c), "EXCLUDED_HOMEROOM_LUNCH_POLICY");
+
+    // 3) 둘 다 열어도 자기 학년 점심시간과 시각이 같으므로 빠진다
+    set(&c, st::INCLUDE_CROSS_LUNCH, true);
+    assert_eq!(why_lunch(&c), "EXCLUDED_HOMEROOM_OWN_LUNCH");
+}
+
+/// 점심시간이 다른 학년의 담임은, 설정을 켰을 때만 후보가 된다.
+#[test]
+fn 점심시간이_다른_담임은_설정을_켜야_점심_보결_후보가_된다() {
+    let c = school();
+    // 고학년 3·4교시를 비워, '이오가' 가 저학년 점심시간(10:30~11:20)에
+    // 실제로 아무 일정이 없게 만든다. 남는 변수는 이번 설정 하나뿐이다.
+    c.execute(
+        "DELETE FROM bell_slots WHERE bell_schedule_id = 2 AND period_no IN (3, 4)",
+        [],
+    )
+    .unwrap();
+
+    let ok = |conn: &Connection| {
+        let snap = repo_find::snapshot(conn, MON).unwrap();
+        let counts = repo_find::counts(conn, MON).unwrap();
+        let r = find_candidates(
+            &snap,
+            &FindRequest {
+                class_id: 1, // 1학년 점심 10:30~11:20
+                slot_type: "LUNCH".into(),
+                period_no: None,
+                absent_teacher_id: None,
+            },
+            &counts,
+        )
+        .unwrap();
+        assert_eq!((r.slot.start_min, r.slot.end_min), (hm(10, 30), hm(11, 20)));
         r.eligible.iter().any(|x| x.name == "이오가")
     };
 
-    assert!(!lunch(&c), "기본은 자기 반 점심에 담임을 빼는 것");
-    set(&c, st::EXCLUDE_LUNCH, false);
-    assert!(lunch(&c), "끄면 담임도 후보가 된다");
+    // 이오가의 자기 학년 점심은 12:00~12:50 — 대상과 겹치지 않는다
+    assert!(!ok(&c), "기본은 점심 보결에 담임을 넣지 않는 것");
+    set(&c, st::INCLUDE_CROSS_LUNCH, true);
+    assert!(ok(&c), "켜면 겹치지 않는 담임은 후보가 된다");
+    set(&c, st::INCLUDE_CROSS_LUNCH, false);
+    assert!(!ok(&c), "다시 끄면 곧바로 빠진다");
 }
 
 // ============================================================

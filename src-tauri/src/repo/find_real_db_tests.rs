@@ -1269,3 +1269,180 @@ fn real_db_현황() {
         ),
     );
 }
+
+// ============================================================
+//  점심 보결의 담임 후보 (v0.1.9)
+// ============================================================
+
+/// 실제 학교 자료로, 점심 보결에 담임을 넣는 설정을 켜고 꺼 본다.
+///
+/// 확인하려는 것은 두 가지다.
+///  - 꺼져 있으면(기본) 담임이 한 사람도 점심 보결 후보가 되지 않는다
+///  - 켜면 **자기 학년 점심시간과 시각이 겹치지 않는 담임만** 후보가 된다
+///
+/// 학년 묶음은 쓰지 않는다. 우리 학교 자료에는 점심 패턴이 셋이고 서로
+/// 조금씩 겹치므로, '다른 점심 그룹'이라는 이유만으로 허용하면 급식 지도
+/// 중인 선생님이 후보로 나온다.
+#[test]
+#[ignore = "실제 자료가 있는 컴퓨터에서만 의미가 있다"]
+fn real_db_점심_보결_담임_정책() {
+    use crate::domain::schedule::homeroom_lunch_intervals;
+    use crate::repo::settings as st;
+
+    let Some(conn) = open_copy() else {
+        println!("실제 자료가 없어 건너뜁니다.");
+        return;
+    };
+    let mut ctx = Ctx::load(conn, &date_for_weekday(1));
+
+    let flip = |conn: &Connection, v: bool| {
+        st::save(
+            conn,
+            &st::SettingsInput {
+                engine: vec![st::EngineInput {
+                    key: st::INCLUDE_CROSS_LUNCH.to_string(),
+                    value: v,
+                }],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    };
+
+    let homeroom_in = |r: &FindResult| -> Vec<String> {
+        r.eligible
+            .iter()
+            .filter(|c| c.role_code == "HOMEROOM")
+            .map(|c| c.name.clone())
+            .collect()
+    };
+
+    /// 그 요일의 점심 패턴마다 학급 하나씩
+    fn targets_of(ctx: &Ctx) -> Vec<(i64, Interval)> {
+        let mut out: Vec<(i64, Interval)> = Vec::new();
+        for c in &ctx.snap.classes {
+            let Some((a, b)) = ctx.slot(c.grade, SLOT_LUNCH, None) else {
+                continue;
+            };
+            let iv = Interval::new(a, b);
+            if !out.iter().any(|(_, x)| *x == iv) {
+                out.push((c.id, iv));
+            }
+        }
+        out.sort_by_key(|(_, iv)| iv.start);
+        out
+    }
+
+    const DAY: [&str; 6] = ["", "월", "화", "수", "목", "금"];
+    let mut checked = 0;
+    let mut opened_total = 0;
+
+    for d in 1..=5 {
+        ctx.date = date_for_weekday(d);
+
+        // ---------- 꺼짐 (업데이트 직후 기본값) ----------
+        flip(&ctx.conn, false);
+        ctx.reload();
+        assert!(!ctx.snap.settings.include_cross_lunch_homeroom);
+        let targets = targets_of(&ctx);
+        if targets.is_empty() {
+            println!("{}요일 — 점심 구간이 없어 건너뜁니다.", DAY[d as usize]);
+            continue;
+        }
+        if d == 1 {
+            println!("\n=== 점심 패턴 ({}요일) ===", DAY[d as usize]);
+            for (cid, iv) in &targets {
+                println!("  {:<8} {}", ctx.label(*cid), fmt_range(iv));
+            }
+        }
+
+        for (target, iv) in &targets {
+            let names = homeroom_in(&ctx.find(*target, SLOT_LUNCH, None));
+            assert!(
+                names.is_empty(),
+                "{}요일 {} {} — 꺼져 있으면 담임이 한 사람도 후보가 되면 안 된다: {names:?}",
+                DAY[d as usize],
+                ctx.label(*target),
+                fmt_range(iv)
+            );
+        }
+        println!(
+            "\n{}요일 — 꺼짐: 점심 {}칸 모두 담임 후보 0명",
+            DAY[d as usize],
+            targets.len()
+        );
+
+        // ---------- 켜짐 ----------
+        flip(&ctx.conn, true);
+        ctx.reload();
+        assert!(ctx.snap.settings.include_cross_lunch_homeroom);
+
+        for (target, iv) in &targets {
+            let r = ctx.find(*target, SLOT_LUNCH, None);
+
+            // 후보가 된 담임은 **모두** 자기 학년 점심과 겹치지 않아야 한다
+            for c in r.eligible.iter().filter(|c| c.role_code == "HOMEROOM") {
+                let own = homeroom_lunch_intervals(&ctx.snap, c.teacher_id);
+                assert!(
+                    !own.is_empty(),
+                    "{} 선생님은 자기 학년 점심을 알 수 없는데 후보가 되었다",
+                    c.name
+                );
+                for o in &own {
+                    assert!(
+                        !o.overlaps(iv),
+                        "{} 선생님의 자기 학년 점심 {} 이 대상 {} 과 겹치는데 후보가 되었다",
+                        c.name,
+                        fmt_range(o),
+                        fmt_range(iv)
+                    );
+                }
+            }
+
+            // 겹치는 담임은 반드시 빠져 있어야 한다
+            let mut blocked = 0;
+            for t in ctx.snap.teachers.iter().filter(|t| t.role_code == "HOMEROOM") {
+                let own = homeroom_lunch_intervals(&ctx.snap, t.id);
+                if own.iter().any(|o| o.overlaps(iv)) {
+                    assert!(
+                        !r.eligible.iter().any(|c| c.teacher_id == t.id),
+                        "{} 선생님은 점심이 겹치므로 빠져야 한다",
+                        t.name
+                    );
+                    blocked += 1;
+                }
+            }
+
+            let names = homeroom_in(&r);
+            opened_total += names.len();
+            checked += 1;
+            println!(
+                "  ok   {:<8} {}  담임 후보 {}명 · 점심이 겹쳐 빠진 담임 {}명{}",
+                ctx.label(*target),
+                fmt_range(iv),
+                names.len(),
+                blocked,
+                if names.is_empty() {
+                    String::new()
+                } else {
+                    format!("\n         → {}", names.join(", "))
+                }
+            );
+        }
+
+        // ---------- 다시 꺼짐 ----------
+        flip(&ctx.conn, false);
+        ctx.reload();
+        for (target, _) in &targets {
+            assert!(
+                homeroom_in(&ctx.find(*target, SLOT_LUNCH, None)).is_empty(),
+                "다시 끄면 곧바로 빠져야 한다"
+            );
+        }
+    }
+
+    println!(
+        "\n  ok   점심 {checked}칸 확인 · 켰을 때 새로 생긴 담임 후보 자리 {opened_total}개"
+    );
+    println!("       (겹치지 않아도 그 시간에 수업이 있으면 여전히 후보가 아니다)");
+}

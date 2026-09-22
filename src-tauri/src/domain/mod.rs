@@ -32,6 +32,10 @@ mod assign_tests;
 mod find_tests;
 
 #[cfg(test)]
+#[path = "lunch_homeroom_tests.rs"]
+mod lunch_homeroom_tests;
+
+#[cfg(test)]
 #[path = "meal_tests.rs"]
 mod meal_tests;
 

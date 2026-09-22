@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "bogyeol"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "chrono",
  "log",
