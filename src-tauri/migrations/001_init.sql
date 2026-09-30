@@ -364,11 +364,12 @@ INSERT INTO exclusion_rules(rule_key, enabled, params_json) VALUES
 -- 추천 우선순위 기본 프리셋: 동학년 -> 당일 적은 순 -> 누적 적은 순
 INSERT INTO priority_rules(rule_key, enabled, sort_order, params_json) VALUES
   ('SAME_GRADE',         1, 1, '{}'),
-  ('FEWEST_TODAY',       1, 2, '{}'),
-  ('FEWEST_TOTAL',       1, 3, '{}'),
-  ('FEWEST_MONTH',       0, 4, '{}'),
-  ('PREFER_SPECIAL',     0, 5, '{}'),
-  ('PREFER_FINISHED',    0, 6, '{}'),
-  ('PREFER_LOWER_GRADE', 0, 7, '{}'),
-  ('SAME_SUBJECT',       0, 8, '{}'),
-  ('PREFER_ADJACENT',    0, 9, '{}');
+  ('SAME_GRADE_BAND',    0, 2, '{}'),   -- 1·2 / 3·4 / 5·6 짝 학년 (기본 꺼짐)
+  ('FEWEST_TODAY',       1, 3, '{}'),
+  ('FEWEST_TOTAL',       1, 4, '{}'),
+  ('FEWEST_MONTH',       0, 5, '{}'),
+  ('PREFER_SPECIAL',     0, 6, '{}'),
+  ('PREFER_FINISHED',    0, 7, '{}'),
+  ('PREFER_LOWER_GRADE', 0, 8, '{}'),
+  ('SAME_SUBJECT',       0, 9, '{}'),
+  ('PREFER_ADJACENT',    0, 10, '{}');

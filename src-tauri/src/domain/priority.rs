@@ -23,6 +23,7 @@ use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
 
 use super::find::{Candidate, ELIGIBLE_AFTER_SCHOOL_END};
+use super::grade;
 use super::schedule::ROLE_SPECIAL;
 
 // ============================================================
@@ -96,6 +97,47 @@ impl PriorityRule for SameGrade {
         c.homeroom_grades
             .contains(&ctx.target_grade)
             .then(|| "동학년".to_string())
+    }
+}
+
+/// 대상 학년의 **짝 학년**을 맡은 담임인가.
+///
+/// 같은 학년 담임은 여기에 들어오지 않는다. '동학년'과 '동학년군'은 서로
+/// 다른 기준이고, 한 사람이 둘 다일 수는 없다 — 그래야 학교가 두 기준의
+/// 순서를 따로 정하는 것이 뜻을 가진다.
+///
+/// 5학년과 6학년을 함께 맡은 담임처럼 두 쪽에 모두 걸릴 수 있는 사람은
+/// **동학년 쪽으로 보낸다.** 더 가까운 관계가 이긴다.
+fn in_paired_grade(c: &Candidate, target_grade: i32) -> bool {
+    if c.homeroom_grades.contains(&target_grade) {
+        return false;
+    }
+    c.homeroom_grades
+        .iter()
+        .any(|g| grade::same_band(target_grade, *g))
+}
+
+struct SameGradeBand;
+impl PriorityRule for SameGradeBand {
+    fn key(&self) -> &'static str {
+        "SAME_GRADE_BAND"
+    }
+    fn label(&self) -> &'static str {
+        "동학년군 교사 우선"
+    }
+    fn hint(&self) -> &'static str {
+        "1·2학년, 3·4학년, 5·6학년을 한 학년군으로 봅니다. \
+         6학년 보결이면 5학년 담임을 먼저 추천합니다. \
+         같은 학년 담임은 '동학년 교사 우선'이 맡으므로 여기에는 들어가지 않습니다."
+    }
+    fn compare(&self, a: &Candidate, b: &Candidate, ctx: &PriorityCtx) -> Ordering {
+        prefer_true(
+            in_paired_grade(a, ctx.target_grade),
+            in_paired_grade(b, ctx.target_grade),
+        )
+    }
+    fn tag(&self, c: &Candidate, ctx: &PriorityCtx) -> Option<String> {
+        in_paired_grade(c, ctx.target_grade).then(|| "동학년군".to_string())
     }
 }
 
@@ -235,6 +277,7 @@ fn lowest(c: &Candidate) -> i32 {
 pub fn all_rules() -> Vec<Box<dyn PriorityRule>> {
     vec![
         Box::new(SameGrade),
+        Box::new(SameGradeBand),
         Box::new(FewestToday),
         Box::new(FewestMonth),
         Box::new(FewestTotal),
@@ -247,6 +290,9 @@ pub fn all_rules() -> Vec<Box<dyn PriorityRule>> {
 /// 처음 설치했을 때의 기준 (켜진 것과 순서).
 pub const DEFAULT_ORDER: &[(&str, bool)] = &[
     ("SAME_GRADE", true),
+    // 학년군까지 볼지는 학교마다 다르다. 자리는 동학년 바로 다음에 두되
+    // 켜는 것은 학교가 정한다.
+    ("SAME_GRADE_BAND", false),
     ("FEWEST_TODAY", true),
     ("FEWEST_TOTAL", true),
     ("FEWEST_MONTH", false),

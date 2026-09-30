@@ -29,13 +29,18 @@ fn live_db_path() -> Option<std::path::PathBuf> {
 /// 원본을 복사해서 열고, 원하는 자료를 더 넣어 시험한다.
 fn open_copy() -> Option<Connection> {
     let src = live_db_path()?;
-    let dst = std::env::temp_dir().join(format!(
-        "bogyeol-test-{}.db",
+    // 시험마다 **따로 쓰는 폴더**에 복사한다. 마이그레이션이 남기는 자동
+    // 백업(backups/…)까지 갈라 놓아야, 여러 시험이 나란히 돌 때 같은
+    // 파일 이름으로 부딪히지 않는다.
+    let dir = std::env::temp_dir().join(format!(
+        "bogyeol-test-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
+    std::fs::create_dir_all(&dir).ok()?;
+    let dst = dir.join("bogyeol.db");
     // WAL에 남은 내용까지 가져오기 위해 백업 API를 쓴다
     let live = Connection::open_with_flags(
         &src,
@@ -86,8 +91,10 @@ impl Ctx {
     }
 
     fn reload(&mut self) {
-        self.snap = repo_find::snapshot(&self.conn, &self.date).unwrap();
-        self.counts = repo_find::counts(&self.conn, &self.date).unwrap();
+        self.snap = repo_find::snapshot(&self.conn, &self.date)
+            .unwrap_or_else(|e| panic!("{} 자료를 다시 읽지 못했다: {e:?}", self.date));
+        self.counts = repo_find::counts(&self.conn, &self.date)
+            .unwrap_or_else(|e| panic!("{} 횟수를 다시 세지 못했다: {e:?}", self.date));
     }
 
     fn class_of(&self, grade: i32, nth: usize) -> Option<i64> {
@@ -1445,4 +1452,210 @@ fn real_db_점심_보결_담임_정책() {
         "\n  ok   점심 {checked}칸 확인 · 켰을 때 새로 생긴 담임 후보 자리 {opened_total}개"
     );
     println!("       (겹치지 않아도 그 시간에 수업이 있으면 여전히 후보가 아니다)");
+}
+
+// ============================================================
+//  추천 기준 — 동학년군 (v0.1.10)
+// ============================================================
+
+/// 실제 학교 자료에서 새 추천 기준이 어떻게 나타나는지 본다.
+///
+/// 확인할 것은 세 가지다.
+///  - 기존 기준의 **순서와 켬/끔**이 하나도 달라지지 않는다
+///  - 새 기준이 '동학년 교사 우선' 바로 다음에 **꺼진 채로** 나타난다
+///  - 화면을 여러 번 열거나 여러 번 저장해도 줄이 늘어나지 않는다
+#[test]
+#[ignore = "실제 자료가 있는 컴퓨터에서만 의미가 있다"]
+fn real_db_동학년군_기준_추가() {
+    use crate::repo::priority as rp;
+
+    let Some(conn) = open_copy() else {
+        println!("실제 자료가 없어 건너뜁니다.");
+        return;
+    };
+
+    // ---------- 업데이트 전 모습을 재현한다 ----------
+    // 실제 자료에는 아직 이 줄이 없다. 혹시 있더라도 지우고 시작한다.
+    conn.execute(
+        "DELETE FROM priority_rules WHERE rule_key = 'SAME_GRADE_BAND'",
+        [],
+    )
+    .unwrap();
+
+    let raw_before: Vec<(String, i64, i32)> = conn
+        .prepare("SELECT rule_key, enabled, sort_order FROM priority_rules ORDER BY sort_order")
+        .unwrap()
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+        .unwrap()
+        .collect::<rusqlite::Result<_>>()
+        .unwrap();
+
+    println!("\n=== 업데이트 전 (DB 에 저장된 줄) ===");
+    for (k, on, o) in &raw_before {
+        println!("  {o:>2}. {k:<20} {}", if *on != 0 { "켬" } else { "끔" });
+    }
+
+    let before = rp::view(&conn).unwrap();
+    let before_rows: Vec<(String, bool)> = before
+        .rules
+        .iter()
+        .filter(|r| r.rule_key != "SAME_GRADE_BAND")
+        .map(|r| (r.rule_key.clone(), r.enabled))
+        .collect();
+
+    // ---------- 업데이트 후 화면 ----------
+    let v = rp::view(&conn).unwrap();
+    println!("\n=== 업데이트 후 (설정 화면에 보이는 목록) ===");
+    for r in &v.rules {
+        println!(
+            "  {:>2}. {:<20} {}{}",
+            r.sort_order,
+            r.rule_key,
+            if r.enabled { "켬" } else { "끔" },
+            if r.rule_key == "SAME_GRADE_BAND" {
+                "   <- 이번에 생김"
+            } else {
+                ""
+            }
+        );
+    }
+    println!(
+        "  기준 {}개 -> {}개 · 기본값과 같은가: {}",
+        before_rows.len(),
+        v.rules.len(),
+        v.is_default
+    );
+
+    // 동학년 바로 다음 자리
+    let keys: Vec<&str> = v.rules.iter().map(|r| r.rule_key.as_str()).collect();
+    let i = keys
+        .iter()
+        .position(|k| *k == "SAME_GRADE")
+        .expect("동학년 기준이 있어야 한다");
+    assert_eq!(keys[i + 1], "SAME_GRADE_BAND", "동학년 바로 다음이어야 한다");
+
+    let band = v
+        .rules
+        .iter()
+        .find(|r| r.rule_key == "SAME_GRADE_BAND")
+        .unwrap();
+    assert!(!band.enabled, "예전 학교에서는 꺼진 채로 나타나야 한다");
+
+    // 기존 기준의 순서와 켬/끔이 그대로
+    let after_rows: Vec<(String, bool)> = v
+        .rules
+        .iter()
+        .filter(|r| r.rule_key != "SAME_GRADE_BAND")
+        .map(|r| (r.rule_key.clone(), r.enabled))
+        .collect();
+    assert_eq!(before_rows, after_rows, "기존 기준이 달라지면 안 된다");
+    println!("  ok   기존 기준 {}개의 순서·켬/끔 그대로", after_rows.len());
+
+    // 정렬에는 아직 끼어들지 않는다
+    assert!(
+        !rp::settings(&conn)
+            .unwrap()
+            .iter()
+            .any(|s| s.rule_key == "SAME_GRADE_BAND"),
+        "켜지 않았으므로 추천 순서에 쓰이지 않는다"
+    );
+    println!("  ok   켜지 않았으므로 추천 순서에 쓰이지 않는다");
+
+    // ---------- 여러 번 열고 여러 번 저장해도 ----------
+    for _ in 0..5 {
+        assert_eq!(rp::view(&conn).unwrap().rules.len(), v.rules.len());
+    }
+    let rows_now: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM priority_rules WHERE rule_key = 'SAME_GRADE_BAND'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(rows_now, 0, "화면을 여는 것만으로는 자료를 쓰지 않는다");
+
+    for _ in 0..3 {
+        let cur = rp::view(&conn).unwrap();
+        let input: Vec<rp::RuleInput> = cur
+            .rules
+            .iter()
+            .map(|r| rp::RuleInput {
+                rule_key: r.rule_key.clone(),
+                enabled: r.enabled || r.rule_key == "SAME_GRADE_BAND",
+            })
+            .collect();
+        rp::save(&conn, &input).unwrap();
+    }
+    let rows_now: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM priority_rules WHERE rule_key = 'SAME_GRADE_BAND'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(rows_now, 1, "세 번 저장해도 한 줄이다");
+    println!("  ok   세 번 저장해도 줄은 하나 · 목록 길이 그대로");
+
+    // 켠 뒤에도 다른 기준의 순서는 그대로다
+    let on = rp::view(&conn).unwrap();
+    let on_rows: Vec<(String, bool)> = on
+        .rules
+        .iter()
+        .filter(|r| r.rule_key != "SAME_GRADE_BAND")
+        .map(|r| (r.rule_key.clone(), r.enabled))
+        .collect();
+    assert_eq!(before_rows, on_rows, "켠 뒤에도 기존 기준은 그대로");
+    println!("  ok   켠 뒤에도 기존 기준의 순서·켬/끔 그대로");
+
+    // ---------- 실제 자료로 추천해 본다 ----------
+    let mut ctx = Ctx::load(conn, &date_for_weekday(1));
+    ctx.reload();
+    let mut shown = 0;
+    println!("\n=== 켠 뒤 추천 순서 (월요일) ===");
+    for grade in 1..=6 {
+        let Some(cid) = ctx.class_of(grade, 0) else {
+            continue;
+        };
+        for p in 1..=6 {
+            if ctx.slot_of(cid, p).is_none() {
+                continue;
+            }
+            let r = ctx.find_ranked(cid, SLOT_PERIOD, Some(p));
+            let band: Vec<&str> = r
+                .eligible
+                .iter()
+                .filter(|c| c.reason.contains("동학년군"))
+                .map(|c| c.name.as_str())
+                .collect();
+            if band.is_empty() {
+                continue;
+            }
+            // 학년군으로 잡힌 사람은 모두 짝 학년 담임이어야 한다
+            let pair = crate::domain::grade::paired_grade(grade).unwrap();
+            for c in r.eligible.iter().filter(|c| c.reason.contains("동학년군")) {
+                assert!(
+                    c.homeroom_grades.contains(&pair),
+                    "{} 는 {grade}학년의 짝({pair}학년) 담임이 아닌데 학년군으로 잡혔다",
+                    c.name
+                );
+                assert!(
+                    !c.homeroom_grades.contains(&grade),
+                    "{} 는 동학년인데 학년군으로도 잡혔다",
+                    c.name
+                );
+            }
+            if shown < 6 {
+                println!(
+                    "  {} {}교시  1순위 {} ({})  · 학년군 {:?}",
+                    ctx.label(cid),
+                    p,
+                    r.eligible[0].name,
+                    r.eligible[0].reason,
+                    band
+                );
+                shown += 1;
+            }
+        }
+    }
+    println!("  ok   학년군으로 잡힌 사람은 모두 짝 학년 담임이고, 동학년과 겹치지 않는다");
 }

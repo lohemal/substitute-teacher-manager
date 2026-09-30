@@ -59,34 +59,69 @@ pub fn settings(conn: &Connection) -> AppResult<Vec<RuleSetting>> {
     Ok(known)
 }
 
+/// 아직 저장되지 않은 기준을 목록 어디에 끼워 넣을지.
+///
+/// 맨 뒤에 붙이면 프로그램을 업데이트한 학교에서는 새 기준이 목록 끝에
+/// 떨어져 나타난다. 관련 있는 기준 옆에 있어야 눈에 띄고, 무엇과 견주는
+/// 기준인지도 바로 보인다. 그래서 **기본 순서에서의 자리**를 따른다.
+///
+/// 기본 순서에서 이 기준보다 앞에 오는 것들 가운데, 화면 목록에 이미 있는
+/// 마지막 것 바로 다음이다. 그래서 학교가 '동학년 교사 우선'을 세 번째로
+/// 옮겨 두었다면 새 '동학년군' 도 네 번째에 나타난다.
+///
+/// **이미 있던 기준끼리의 순서는 건드리지 않는다.** 끼워 넣기만 한다.
+fn insert_pos(keys: &[&str], key: &str) -> usize {
+    let Some(at) = DEFAULT_ORDER.iter().position(|(k, _)| *k == key) else {
+        return keys.len(); // 기본 순서에 없는 기준이면 맨 뒤
+    };
+    let mut pos = 0;
+    for (before, _) in &DEFAULT_ORDER[..at] {
+        if let Some(i) = keys.iter().position(|k| k == before) {
+            pos = pos.max(i + 1);
+        }
+    }
+    pos
+}
+
 pub fn view(conn: &Connection) -> AppResult<PriorityView> {
     let saved = settings(conn)?;
     let registry = all_rules();
 
-    // 저장된 순서를 따르고, 아직 저장되지 않은 기준은 뒤에 붙인다
-    let mut rules: Vec<RuleView> = Vec::new();
+    // 저장된 순서를 먼저 깔고
+    let mut keys: Vec<&str> = Vec::new();
     for s in &saved {
         if let Some(r) = registry.iter().find(|r| r.key() == s.rule_key) {
-            rules.push(RuleView {
-                rule_key: r.key().to_string(),
-                label: r.label().to_string(),
-                hint: r.hint().to_string(),
-                enabled: s.enabled,
-                sort_order: rules.len() as i32 + 1,
-            });
+            keys.push(r.key());
         }
     }
+    // 아직 저장되지 않은 기준(프로그램을 업데이트해서 새로 생긴 것)을
+    // 기본 순서에서의 자리에 끼워 넣는다
     for r in &registry {
-        if !rules.iter().any(|x| x.rule_key == r.key()) {
-            rules.push(RuleView {
+        if !keys.contains(&r.key()) {
+            let pos = insert_pos(&keys, r.key());
+            keys.insert(pos, r.key());
+        }
+    }
+
+    let rules: Vec<RuleView> = keys
+        .iter()
+        .enumerate()
+        .map(|(i, key)| {
+            let r = registry.iter().find(|r| r.key() == *key).expect("등록된 기준");
+            RuleView {
                 rule_key: r.key().to_string(),
                 label: r.label().to_string(),
                 hint: r.hint().to_string(),
-                enabled: false,
-                sort_order: rules.len() as i32 + 1,
-            });
-        }
-    }
+                // 저장된 적 없는 기준은 꺼진 채로 나온다 — 학교가 켜야 쓴다
+                enabled: saved
+                    .iter()
+                    .find(|s| s.rule_key == *key)
+                    .map(|s| s.enabled)
+                    .unwrap_or(false),
+                sort_order: i as i32 + 1,
+            }
+        })
+        .collect();
 
     let is_default = rules.len() == DEFAULT_ORDER.len()
         && rules
@@ -148,6 +183,10 @@ pub fn reset(conn: &Connection) -> AppResult<()> {
 }
 
 #[cfg(test)]
+#[path = "grade_band_tests.rs"]
+mod grade_band_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::db::memory_conn;
@@ -184,7 +223,7 @@ mod tests {
     fn 모든_기준이_이름과_설명을_갖고_목록에_나온다() {
         let c = memory_conn();
         let v = view(&c).unwrap();
-        assert_eq!(v.rules.len(), 7, "기본 제공 기준 7가지");
+        assert_eq!(v.rules.len(), 8, "기본 제공 기준 8가지");
         for r in &v.rules {
             assert!(!r.label.is_empty(), "{}", r.rule_key);
             assert!(!r.hint.is_empty(), "{}", r.rule_key);
@@ -204,6 +243,7 @@ mod tests {
                 ("FEWEST_TOTAL", true),
                 ("FEWEST_TODAY", true),
                 ("SAME_GRADE", true),
+                ("SAME_GRADE_BAND", false),
                 ("FEWEST_MONTH", false),
                 ("PREFER_SPECIAL", false),
                 ("PREFER_FINISHED", false),
@@ -232,6 +272,7 @@ mod tests {
             &c,
             &input(&[
                 ("SAME_GRADE", false),
+                ("SAME_GRADE_BAND", false),
                 ("FEWEST_TOTAL", true),
                 ("FEWEST_TODAY", false),
                 ("FEWEST_MONTH", false),
@@ -245,7 +286,7 @@ mod tests {
         assert_eq!(order_of(&c), vec!["FEWEST_TOTAL"]);
         // 꺼진 기준도 목록에는 남아 있어야 한다 (다시 켤 수 있게)
         let v = view(&c).unwrap();
-        assert_eq!(v.rules.len(), 7);
+        assert_eq!(v.rules.len(), 8);
         assert!(!v.rules.iter().find(|r| r.rule_key == "SAME_GRADE").unwrap().enabled);
     }
 
@@ -257,6 +298,7 @@ mod tests {
             &input(&[
                 ("PREFER_LOWER_GRADE", true),
                 ("SAME_GRADE", false),
+                ("SAME_GRADE_BAND", false),
                 ("FEWEST_TODAY", false),
                 ("FEWEST_MONTH", false),
                 ("FEWEST_TOTAL", false),
@@ -280,6 +322,7 @@ mod tests {
             &c,
             &input(&[
                 ("SAME_GRADE", false),
+                ("SAME_GRADE_BAND", false),
                 ("FEWEST_TODAY", false),
                 ("FEWEST_TOTAL", false),
                 ("FEWEST_MONTH", false),
@@ -315,14 +358,14 @@ mod tests {
         let raw: i64 = c
             .query_row("SELECT COUNT(*) FROM priority_rules", [], |r| r.get(0))
             .unwrap();
-        assert!(raw >= 7);
+        assert!(raw >= 8);
 
         let known = settings(&c).unwrap();
         assert!(
             known.iter().all(|s| is_known_key(&s.rule_key)),
             "프로그램이 아는 기준만 넘어와야 한다"
         );
-        assert_eq!(view(&c).unwrap().rules.len(), 7);
+        assert_eq!(view(&c).unwrap().rules.len(), 8);
     }
 }
 

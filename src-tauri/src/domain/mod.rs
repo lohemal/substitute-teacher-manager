@@ -5,6 +5,7 @@
 //!
 //! - `time`     : 시간 구간과 겹침 판단 (프로그램 전체에서 이 한 곳만 쓴다)
 //! - `schedule` : 하루치 자료 -> 교사별 바쁜 시간 구간
+//! - `grade`    : 학년군(1·2 / 3·4 / 5·6) 같은 학년에 관한 학교 규칙
 //! - `find`     : STEP 1 후보 걸러내기 (가능/불가능 판정)
 //! - `priority` : STEP 2 학교별 기준으로 추천 순서 매기기
 //! - `assign`   : STEP 3 배정 직전 재검증 · 하루 일괄 보결 대상 찾기
@@ -16,6 +17,7 @@
 pub mod assign;
 pub mod fairness;
 pub mod find;
+pub mod grade;
 pub mod meal;
 pub mod pay;
 pub mod period;
@@ -30,6 +32,10 @@ mod assign_tests;
 #[cfg(test)]
 #[path = "find_tests.rs"]
 mod find_tests;
+
+#[cfg(test)]
+#[path = "grade_band_tests.rs"]
+mod grade_band_tests;
 
 #[cfg(test)]
 #[path = "lunch_homeroom_tests.rs"]

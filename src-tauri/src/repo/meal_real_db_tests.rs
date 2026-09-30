@@ -26,13 +26,18 @@ fn live_db_path() -> Option<std::path::PathBuf> {
 
 fn open_copy() -> Option<Connection> {
     let src = live_db_path()?;
-    let dst = std::env::temp_dir().join(format!(
-        "bogyeol-meal-real-{}.db",
+    // 시험마다 **따로 쓰는 폴더**에 복사한다. 마이그레이션이 남기는 자동
+    // 백업(backups/…)까지 갈라 놓아야, 여러 시험이 나란히 돌 때 같은
+    // 파일 이름으로 부딪히지 않는다.
+    let dir = std::env::temp_dir().join(format!(
+        "bogyeol-meal-real-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
     ));
+    std::fs::create_dir_all(&dir).ok()?;
+    let dst = dir.join("bogyeol.db");
     let live = Connection::open_with_flags(
         &src,
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_URI,
