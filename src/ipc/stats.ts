@@ -29,6 +29,8 @@ export interface Summary {
   /** 기간 안의 배정 건수 전체. 결근 등록 없이 배정한 건도 들어간다 */
   assigned: number
   unassigned: number
+  /** 일정이 바뀌어 보결하지 않기로 한 시간 수 */
+  notRequired: number
   cancelled: number
   subTeachers: number
 }
@@ -77,6 +79,7 @@ export interface AbsenceStat {
   required: number
   assigned: number
   unassigned: number
+  notRequired: number
 }
 
 export interface DayStat {
@@ -87,6 +90,7 @@ export interface DayStat {
   required: number
   assigned: number
   unassigned: number
+  notRequired: number
   cancelled: number
 }
 

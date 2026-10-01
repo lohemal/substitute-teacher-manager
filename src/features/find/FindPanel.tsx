@@ -15,6 +15,7 @@ import {
 } from '@/ipc/find'
 import { assignApi, type AbsenceRow, type AssignSaved } from '@/ipc/assign'
 import { errorDetail, errorMessage } from '@/ipc/invoke'
+import { DEV_TOOLS } from '@/lib/devTools'
 import { priorityApi } from '@/ipc/priority'
 import { useRemembered } from '@/lib/remember'
 import { AbsenceDeleteModal } from '@/features/assign/AbsenceDeleteModal'
@@ -61,7 +62,10 @@ export function FindPanel() {
   const [periodNo, setPeriodNo] = useState<number | null>(null)
   const [result, setResult] = useState<FindResult | null>(null)
   const [showExcluded, setShowExcluded] = useState(false)
-  const [showDebug, setShowDebug] = useState(false)
+  // 개발용 진단 화면. 배포 설치본에서는 체크 상자 자체가 없고, 혹시
+  // 어딘가에서 켜지더라도 DEV_TOOLS 가 false 면 아무것도 그리지 않는다.
+  const [debugOn, setDebugOn] = useState(false)
+  const showDebug = DEV_TOOLS && debugOn
 
   // Phase 8 — 배정
   const qc = useQueryClient()
@@ -580,14 +584,16 @@ export function FindPanel() {
             >
               {showExcluded ? '▾' : '▸'} 배정할 수 없는 선생님 {result.excluded.length}명
             </button>
-            <label className={s.debugToggle}>
-              <input
-                type="checkbox"
-                checked={showDebug}
-                onChange={(e) => setShowDebug(e.target.checked)}
-              />
-              <span>개발자 확인</span>
-            </label>
+            {DEV_TOOLS && (
+              <label className={s.debugToggle}>
+                <input
+                  type="checkbox"
+                  checked={debugOn}
+                  onChange={(e) => setDebugOn(e.target.checked)}
+                />
+                <span>개발자 확인</span>
+              </label>
+            )}
           </div>
 
           {showExcluded && (

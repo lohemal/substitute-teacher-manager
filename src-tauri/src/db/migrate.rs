@@ -46,6 +46,11 @@ const MIGRATIONS: &[Migration] = &[
         name: "005_special_meal",
         sql: include_str!("../../migrations/005_special_meal.sql"),
     },
+    Migration {
+        version: 6,
+        name: "006_waiver",
+        sql: include_str!("../../migrations/006_waiver.sql"),
+    },
 ];
 
 pub fn latest_version() -> i32 {

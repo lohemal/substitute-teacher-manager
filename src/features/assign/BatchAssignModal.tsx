@@ -3,7 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { Modal } from '@/components/Modal'
 import { Button, Notice } from '@/components/ui'
-import { assignApi, type BatchPick, type PlanSlot } from '@/ipc/assign'
+import {
+  assignApi,
+  WAIVER_REASONS,
+  type BatchPick,
+  type PlanSlot,
+} from '@/ipc/assign'
 import { DAY_LABEL, minToHm } from '@/ipc/bell'
 import type { FindOptions } from '@/ipc/find'
 import { errorDetail, errorMessage } from '@/ipc/invoke'
@@ -23,10 +28,11 @@ interface Props {
   onSaved: (count: number) => void
 }
 
-type SlotState = 'DONE' | 'PLANNED' | 'EMPTY' | 'BLOCKED'
+type SlotState = 'DONE' | 'WAIVED' | 'PLANNED' | 'EMPTY' | 'BLOCKED'
 
 const STATE_LABEL: Record<SlotState, string> = {
   DONE: '배정 완료',
+  WAIVED: '보결 불필요',
   PLANNED: '배정 예정',
   EMPTY: '미배정',
   BLOCKED: '후보 없음',
@@ -120,7 +126,8 @@ export function BatchAssignModal({
         startMin: x.startMin,
         endMin: x.endMin,
         candidateIds: x.candidates.map((c) => c.teacherId),
-        taken: x.existingSubId != null,
+        // 보결 불필요 칸은 고를 대상이 아니다 — 추천 1순위도 넣지 않는다
+        taken: x.existingSubId != null || x.waiver != null,
       })),
     [plan],
   )
@@ -130,12 +137,17 @@ export function BatchAssignModal({
     setPicks(initialPicks(pickSlots))
   }, [pickSlots])
 
+  useEffect(() => {
+    setWaiving(null)
+  }, [day, target])
+
   const flags = useMemo(() => flagPicks(pickSlots, picks), [pickSlots, picks])
   const overlapCount = Object.values(flags).filter((f) => f === 'OVERLAP').length
   const duplicateCount = Object.values(flags).filter((f) => f === 'DUPLICATE').length
 
   const stateOf = (x: PlanSlot): SlotState => {
     if (x.existingSubId != null) return 'DONE'
+    if (x.waiver != null) return 'WAIVED'
     if (x.candidates.length === 0) return 'BLOCKED'
     return picks[slotKey(x)] != null ? 'PLANNED' : 'EMPTY'
   }
@@ -143,7 +155,7 @@ export function BatchAssignModal({
   const planned = useMemo(() => {
     if (!plan) return [] as BatchPick[]
     return plan.slots
-      .filter((x) => x.existingSubId == null && picks[slotKey(x)] != null)
+      .filter((x) => x.existingSubId == null && x.waiver == null && picks[slotKey(x)] != null)
       .map((x) => ({
         classId: x.classId,
         slotType: x.slotType,
@@ -169,6 +181,48 @@ export function BatchAssignModal({
       onSaved(out.saved.length)
       onClose()
     },
+  })
+
+  // ---------- 보결 불필요 ----------
+  //
+  // 예외 상황을 처리하는 보조 기능이다. [배정]과 달리 **누르는 즉시** 저장한다
+  // — 배정 묶음과 섞이면 '무엇을 저장하는 것인지'가 흐려진다.
+  const [waiving, setWaiving] = useState<string | null>(null)
+  const [reason, setReason] = useState<string>(WAIVER_REASONS[0].code)
+  const [note, setNote] = useState('')
+
+  const refreshPlan = async (next: typeof plan) => {
+    qc.setQueryData(['day-plan', day, target], next)
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['stats'] }),
+      qc.invalidateQueries({ queryKey: ['absences'] }),
+      qc.invalidateQueries({ queryKey: ['find-in-charge'] }),
+    ])
+  }
+
+  const waive = useMutation({
+    mutationFn: (x: PlanSlot) =>
+      assignApi.waive({
+        date: day,
+        classId: x.classId,
+        slotType: x.slotType,
+        periodNo: x.periodNo,
+        absentTeacherId: target as number,
+        reasonCode: reason,
+        note: reason === 'OTHER' ? note : null,
+      }),
+    onSuccess: async (next) => {
+      setWaiving(null)
+      setNote('')
+      setReason(WAIVER_REASONS[0].code)
+      await refreshPlan(next)
+    },
+  })
+
+  const unwaive = useMutation({
+    mutationFn: (x: PlanSlot) =>
+      assignApi.unwaive(x.waiver!.id, day, target as number),
+    onSuccess: refreshPlan,
   })
 
   const noticeCount = plan?.slots.filter((x) => x.notice).length ?? 0
@@ -317,7 +371,12 @@ export function BatchAssignModal({
                 const chosenC = x.candidates.find((c) => c.teacherId === chosen)
                 const nth = repeatIndex(pickSlots, picks, key)
                 return (
-                  <tr key={key} className={st === 'DONE' ? s.rowDone : undefined}>
+                  <tr
+                    key={key}
+                    className={
+                      st === 'DONE' ? s.rowDone : st === 'WAIVED' ? s.rowWaived : undefined
+                    }
+                  >
                     <td className={s.timeCol}>
                       <span className={s.slotLabel}>{x.slotLabel}</span>
                       <span className={`${s.time} num`}>
@@ -341,6 +400,61 @@ export function BatchAssignModal({
                     <td className={s.pickCol}>
                       {st === 'DONE' ? (
                         <span className={s.doneName}>{x.existingSubName}</span>
+                      ) : st === 'WAIVED' ? (
+                        <div className={s.waived}>
+                          <span className={s.waivedWhy}>
+                            {x.waiver!.reasonLabel}
+                            {x.waiver!.note ? ` · ${x.waiver!.note}` : ''}
+                          </span>
+                          <button
+                            type="button"
+                            className={s.linkBtn}
+                            disabled={unwaive.isPending}
+                            onClick={() => unwaive.mutate(x)}
+                          >
+                            보결 필요로 되돌리기
+                          </button>
+                        </div>
+                      ) : waiving === key ? (
+                        <div className={s.waiveForm}>
+                          <select
+                            className={s.select}
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                          >
+                            {WAIVER_REASONS.map((r) => (
+                              <option key={r.code} value={r.code}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                          {reason === 'OTHER' && (
+                            <input
+                              className={s.noteInput}
+                              value={note}
+                              maxLength={60}
+                              placeholder="사유를 간단히 (선택)"
+                              onChange={(e) => setNote(e.target.value)}
+                            />
+                          )}
+                          <div className={s.waiveBtns}>
+                            <button
+                              type="button"
+                              className={s.linkBtn}
+                              disabled={waive.isPending}
+                              onClick={() => waive.mutate(x)}
+                            >
+                              {waive.isPending ? '처리 중…' : '확인'}
+                            </button>
+                            <button
+                              type="button"
+                              className={s.linkBtn}
+                              onClick={() => setWaiving(null)}
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         <>
                           <select
@@ -371,6 +485,18 @@ export function BatchAssignModal({
                           {x.candidates.length === 0 && (
                             <span className={s.none}>이 시간에 가능한 선생님이 없습니다</span>
                           )}
+                          <button
+                            type="button"
+                            className={s.waiveLink}
+                            title="일정이 바뀌어 이 시간에는 보결이 필요 없을 때"
+                            onClick={() => {
+                              setReason(WAIVER_REASONS[0].code)
+                              setNote('')
+                              setWaiving(key)
+                            }}
+                          >
+                            보결 불필요
+                          </button>
                         </>
                       )}
                     </td>

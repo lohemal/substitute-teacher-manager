@@ -92,7 +92,26 @@ export interface PlanSlot {
   existingSubId: number | null
   existingSubName: string | null
   notice: SlotNotice | null
+  /** 일정이 바뀌어 보결하지 않기로 한 칸이면 그 기록 */
+  waiver: Waiver | null
 }
+
+/** 보결 불필요 기록 */
+export interface Waiver {
+  id: number
+  /** SPECIAL_CHANGED | OTHER */
+  reasonCode: string
+  /** '전담시간 변경' */
+  reasonLabel: string
+  note: string | null
+  createdAt: string
+}
+
+/** 보결 불필요 사유 — 학교에서 거의 이 둘뿐이다 */
+export const WAIVER_REASONS = [
+  { code: 'SPECIAL_CHANGED', label: '전담시간 변경' },
+  { code: 'OTHER', label: '기타' },
+] as const
 
 export interface DayPlan {
   date: string
@@ -179,6 +198,21 @@ export const assignApi = {
     invoke<void>('assign_cancel', { id, reason: reason ?? null }),
   history: (filter?: HistoryFilter) =>
     invoke<HistoryView>('assign_history', { filter: filter ?? null }),
+
+  // 보결 불필요 — 결근 기록과 배정 기록은 그대로 두고 상태만 남긴다
+  waive: (input: WaiverInput) => invoke<DayPlan>('waiver_set', { input }),
+  unwaive: (id: number, date: string, teacherId: number) =>
+    invoke<DayPlan>('waiver_revoke', { id, date, teacherId }),
+}
+
+export interface WaiverInput {
+  date: string
+  classId: number
+  slotType: SlotKind
+  periodNo?: number | null
+  absentTeacherId: number
+  reasonCode: string
+  note?: string | null
 }
 
 /** 취소 사유 고르기 — 직접 입력도 가능하다 */

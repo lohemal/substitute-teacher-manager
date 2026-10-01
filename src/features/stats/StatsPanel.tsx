@@ -163,7 +163,12 @@ function SummaryCards({ v }: { v: StatsView }) {
           label="보결 필요"
           value={m.required}
           unit="건"
-          sub={m.required > 0 ? `배정 ${m.covered} · 미배정 ${m.unassigned}` : '등록된 결근 없음'}
+          sub={
+            m.required > 0
+              ? `배정 ${m.covered} · 미배정 ${m.unassigned}` +
+                (m.notRequired > 0 ? ` · 보결 불필요 ${m.notRequired}` : '')
+              : '등록된 결근 없음'
+          }
         />
         <Card
           label="미배정"
@@ -190,6 +195,15 @@ function SummaryCards({ v }: { v: StatsView }) {
               : undefined
           }
         />
+        {/* 평소에는 없는 칸이다. 생겼을 때만 보여 주어 화면을 늘리지 않는다 */}
+        {m.notRequired > 0 && (
+          <Card
+            label="보결 불필요"
+            value={m.notRequired}
+            unit="건"
+            sub="일정이 바뀌어 보결하지 않기로 한 시간"
+          />
+        )}
         <Card label="취소" value={m.cancelled} unit="건" />
         <Card label="보결 맡은 교사" value={m.subTeachers} unit="명" />
       </div>

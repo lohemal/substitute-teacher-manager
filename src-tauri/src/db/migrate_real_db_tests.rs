@@ -68,7 +68,10 @@ const TABLES: &[(&str, &str)] = &[
 ];
 
 /// 이번 업데이트로 **새로 생기는** 것들. 없던 자리에 빈 표가 생기기만 해야 한다.
-const NEW_TABLES: &[(&str, &str)] = &[("전담 식사시간 지정", "teacher_meal_overrides")];
+const NEW_TABLES: &[(&str, &str)] = &[
+    ("전담 식사시간 지정", "teacher_meal_overrides"),
+    ("보결 불필요", "substitution_waivers"),
+];
 
 fn count(c: &Connection, table: &str) -> i64 {
     c.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
@@ -97,7 +100,7 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
     println!("복사본 스키마 버전 v{was} → 최신 v{}", migrate::latest_version());
 
     // 실제 업그레이드를 재현하려고 예전 버전으로 되돌린 뒤 다시 올린다.
-    // 004 는 INSERT OR IGNORE, 005 는 CREATE TABLE IF NOT EXISTS 라서
+    // 004 는 INSERT OR IGNORE, 005·006 은 CREATE TABLE IF NOT EXISTS 라서
     // 몇 번 돌려도 결과가 같다.
     conn.pragma_update(None, "user_version", 3).unwrap();
 
@@ -148,7 +151,12 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
         .unwrap_or_else(|_| "(학교 없음)".into());
     println!("  ok   학교 구분     {st}");
 
-    // 새로 생기는 표 — 없던 것에서 빈 표로. 기존 자료를 건드리지 않는다.
+    // 뒤에 들어온 표들. 두 가지 경우가 있다.
+    //
+    //  - 이 컴퓨터의 자료가 아직 그 버전 앞이면: 없던 자리에 **빈 표**가 생긴다
+    //  - 이미 그 버전을 지난 자료면: 표가 그대로 있고 **행이 하나도 줄지 않는다**
+    //
+    // 어느 쪽이든 자료를 잃지 않는 것이 확인할 점이다.
     for (ko, t) in NEW_TABLES {
         let before = before_new
             .iter()
@@ -156,9 +164,14 @@ fn real_db_마이그레이션_후에도_자료가_그대로다() {
             .map(|(_, c)| *c)
             .unwrap_or(-1);
         let after = count(&conn, t);
-        assert_eq!(before, -1, "{ko}({t}) 는 예전 자료에 없어야 한다");
-        assert_eq!(after, 0, "{ko}({t}) 는 빈 표로 생겨야 한다");
-        println!("  ok   {ko:<12} 새로 생김 (0건)");
+        assert!(after >= 0, "{ko}({t}) 표가 있어야 한다");
+        if before < 0 {
+            assert_eq!(after, 0, "{ko}({t}) 는 빈 표로 생겨야 한다");
+            println!("  ok   {ko:<12} 새로 생김 (0건)");
+        } else {
+            assert_eq!(before, after, "{ko}({t}) 행이 줄었다: {before} → {after}");
+            println!("  ok   {ko:<12} 이미 있던 표 {after}건 그대로");
+        }
     }
 
     // 전담교사 식사시간 — 업데이트 직후에는 아무것도 정해지지 않은 상태여야 한다

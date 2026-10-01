@@ -133,6 +133,7 @@ impl World {
                 settings: EngineSettings::default(),
                 meal_default: None,
                 meal_overrides: HashMap::new(),
+                waived_slots: Default::default(),
             },
         }
     }

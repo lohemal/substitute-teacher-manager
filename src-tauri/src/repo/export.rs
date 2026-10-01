@@ -121,6 +121,9 @@ pub fn stats_sheets(conn: &Connection, q: &StatsQuery) -> AppResult<Vec<Sheet>> 
         ("보결 필요(건)", v.summary.required),
         ("필요분 중 배정(건)", v.summary.covered),
         ("미배정(건)", v.summary.unassigned),
+        // 일정이 바뀌어 보결하지 않기로 한 칸. 미배정에는 들어가지 않으므로
+        // 이 줄이 없으면 보결 필요 = 배정 + 미배정 이 맞지 않아 보인다.
+        ("보결 불필요(건)", v.summary.not_required),
         ("기간 배정(건)", v.summary.assigned),
         ("취소(건)", v.summary.cancelled),
         ("보결 맡은 교사(명)", v.summary.sub_teachers),
@@ -184,6 +187,7 @@ pub fn stats_sheets(conn: &Connection, q: &StatsQuery) -> AppResult<Vec<Sheet>> 
             col("보결 필요", 10.0),
             col("배정", 8.0),
             col("미배정", 9.0),
+            col("보결 불필요", 12.0),
         ],
     );
     for a in &v.absences {
@@ -197,6 +201,7 @@ pub fn stats_sheets(conn: &Connection, q: &StatsQuery) -> AppResult<Vec<Sheet>> 
             i(a.required),
             i(a.assigned),
             i(a.unassigned),
+            i(a.not_required),
         ]);
     }
 
@@ -211,6 +216,7 @@ pub fn stats_sheets(conn: &Connection, q: &StatsQuery) -> AppResult<Vec<Sheet>> 
             col("보결 필요", 10.0),
             col("배정 완료", 10.0),
             col("미배정", 9.0),
+            col("보결 불필요", 12.0),
             col("취소", 8.0),
         ],
     );
@@ -227,6 +233,7 @@ pub fn stats_sheets(conn: &Connection, q: &StatsQuery) -> AppResult<Vec<Sheet>> 
             i(d.required),
             i(d.assigned),
             i(d.unassigned),
+            i(d.not_required),
             i(d.cancelled),
         ]);
     }

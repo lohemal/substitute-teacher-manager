@@ -17,4 +17,5 @@ pub mod stats;
 pub mod term;
 pub mod setup;
 pub mod teacher;
+pub mod waiver;
 pub mod xlsx;

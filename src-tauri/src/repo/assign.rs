@@ -255,6 +255,7 @@ fn map_assign_error(e: assign::AssignError) -> AppError {
         assign::AssignError::UnknownTeacher => "NOT_FOUND",
         assign::AssignError::SameAsAbsent { .. } => "INVALID_INPUT",
         assign::AssignError::NotEligible { .. } => "RECHECK_FAILED",
+        assign::AssignError::NotRequired { .. } => "NOT_REQUIRED",
     };
     AppError::new(code, assign::error_message(&e))
 }
@@ -490,6 +491,8 @@ pub struct PlanSlot {
     pub existing_sub_name: Option<String>,
     /// 확인하면 좋은 내용 (전담 시간 등)
     pub notice: Option<SlotNotice>,
+    /// 보결 불필요로 처리해 둔 칸이면 그 기록
+    pub waiver: Option<crate::repo::waiver::WaiverView>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -550,10 +553,14 @@ pub fn day_plan(conn: &Connection, date: &str, teacher_id: i64) -> AppResult<Day
         }
     }
 
+    let waivers = crate::repo::waiver::views_for_date(conn, date)?;
+
     let mut slots: Vec<PlanSlot> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();
 
     for d in &duties {
+        // 보결 불필요로 처리해 둔 칸이면 후보가 없다고 알릴 일도 없다
+        let waiver = waivers.get(&(d.class_id, d.start_min)).cloned();
         let req = FindRequest {
             class_id: d.class_id,
             slot_type: d.slot_type.clone(),
@@ -564,7 +571,7 @@ pub fn day_plan(conn: &Connection, date: &str, teacher_id: i64) -> AppResult<Day
         {
             Ok(mut r) => {
                 rank_candidates(&mut r.eligible, &settings, r.slot.grade);
-                if r.eligible.is_empty() {
+                if r.eligible.is_empty() && waiver.is_none() {
                     warnings.push(format!(
                         "{} {}에 배정할 수 있는 선생님이 없습니다.",
                         d.class_label, d.slot_label
@@ -597,6 +604,7 @@ pub fn day_plan(conn: &Connection, date: &str, teacher_id: i64) -> AppResult<Day
             kind_label: assign::duty_kind_label(&d.kind).to_string(),
             subject_name: d.subject_name.clone(),
             candidates,
+            waiver,
             existing_sub_id: found.map(|f| f.0),
             existing_sub_name: found.map(|f| f.1.clone()),
             notice,

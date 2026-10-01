@@ -214,6 +214,7 @@ pub fn snapshot(conn: &Connection, date: &str) -> AppResult<DaySnapshot> {
         // **사람이 정한 값**만 읽어 온다 (판정은 domain 이 그때그때 한다).
         meal_default: super::meal::default_window(conn, day_of_week)?,
         meal_overrides: super::meal::overrides_for_day(conn, day_of_week)?,
+        waived_slots: super::waiver::active_slots(conn, date)?,
     })
 }
 

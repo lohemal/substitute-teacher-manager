@@ -223,6 +223,11 @@ pub enum AssignError {
     UnknownTeacher,
     /// 결근 교사를 자기 보결로 넣으려 한다
     SameAsAbsent { name: String },
+    /// 그 칸은 보결 불필요로 처리되어 있다
+    NotRequired {
+        class_label: String,
+        slot_label: String,
+    },
     /// 조회 이후 상황이 바뀌어 더 이상 배정할 수 없다
     NotEligible {
         name: String,
@@ -255,6 +260,21 @@ pub fn verify(
         absent_teacher_id,
     };
     let mut result = find_candidates(snap, &req, counts).map_err(AssignError::Slot)?;
+
+    // 보결 불필요로 처리해 둔 칸에는 넣지 않는다.
+    //
+    // 화면을 열어 둔 채 다른 곳에서 처리했을 수 있으므로 **저장할 때 다시
+    // 본다.** 되돌리면 그 다음 저장부터 곧바로 다시 들어간다.
+    if snap
+        .waived_slots
+        .contains(&(result.slot.class_id, result.slot.start_min))
+    {
+        return Err(AssignError::NotRequired {
+            class_label: result.slot.class_label.clone(),
+            slot_label: result.slot.slot_label.clone(),
+        });
+    }
+
     rank_candidates(&mut result.eligible, settings, result.slot.grade);
 
     let picked: &Candidate = match result
@@ -343,6 +363,12 @@ pub fn error_message(e: &AssignError) -> String {
         AssignError::SameAsAbsent { name } => {
             format!("{name} 선생님은 이 시간에 결근하시므로 보결로 배정할 수 없습니다.")
         }
+        AssignError::NotRequired {
+            class_label,
+            slot_label,
+        } => format!(
+            "{class_label} {slot_label}는 보결이 필요하지 않은 시간입니다.              보결 불필요로 처리되어 있으므로 배정할 수 없습니다.              다시 배정하시려면 먼저 [보결 필요로 되돌리기]를 눌러 주세요."
+        ),
         AssignError::NotEligible {
             name,
             status,

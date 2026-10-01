@@ -16,6 +16,7 @@ pub mod school;
 pub mod setup;
 pub mod stats;
 pub mod teacher;
+pub mod waiver;
 
 pub use admin::*;
 pub use app::*;
@@ -30,3 +31,4 @@ pub use school::*;
 pub use setup::*;
 pub use stats::*;
 pub use teacher::*;
+pub use waiver::*;

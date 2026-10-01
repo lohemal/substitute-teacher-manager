@@ -121,6 +121,9 @@ pub fn run() {
             commands::assign_batch,
             commands::assign_cancel,
             commands::assign_history,
+            // 보결 불필요 — 결근·배정 기록은 그대로 두고 상태만 남긴다
+            commands::waiver_set,
+            commands::waiver_revoke,
             // 보결 현황
             commands::stats_view,
             // 전담교사 식사시간 — 사람이 정한 값만 저장한다

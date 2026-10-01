@@ -373,3 +373,95 @@
   background: #dc2626;
   color: #fff;
 }
+
+/* ---------- 보결 불필요 ---------- */
+/*
+ * 예외 상황을 처리하는 보조 기능이다. [배정]보다 눈에 띄면 안 되므로
+ * 글자 링크로만 둔다. 잘못된 일이 아니므로 경고색도 쓰지 않는다.
+ */
+
+.waiveLink {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.waiveLink:hover {
+  color: var(--sky-700);
+}
+
+.waiveForm {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.noteInput {
+  width: 100%;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.noteInput:focus {
+  outline: 2px solid var(--sky-300);
+  outline-offset: 1px;
+  border-color: var(--sky-500);
+}
+
+.waiveBtns {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.linkBtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--sky-700);
+  cursor: pointer;
+}
+
+.linkBtn:hover {
+  text-decoration: underline;
+}
+
+.linkBtn:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.rowWaived {
+  background: var(--sky-50);
+}
+
+.waived {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.waivedWhy {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.state_WAIVED {
+  background: var(--sky-100);
+  color: var(--sky-700);
+}

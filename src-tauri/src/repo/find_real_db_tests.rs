@@ -1659,3 +1659,288 @@ fn real_db_동학년군_기준_추가() {
     }
     println!("  ok   학년군으로 잡힌 사람은 모두 짝 학년 담임이고, 동학년과 겹치지 않는다");
 }
+
+
+// ============================================================
+//  보결 불필요 (v0.1.11)
+// ============================================================
+
+/// 실제 학교 자료의 종일 결근 한 건으로 전체 흐름을 밟아 본다.
+///
+///     미배정 → 보결 불필요 → 미배정에서 빠짐 → 되돌리기 → 미배정 복귀 → 실제 배정
+///
+/// 원본은 읽기 전용으로만 열고, 복사본에서만 바꾼다.
+#[test]
+#[ignore = "실제 자료가 있는 컴퓨터에서만 의미가 있다"]
+fn real_db_보결_불필요_흐름() {
+    use rusqlite::OptionalExtension;
+
+    use crate::repo::{assign as ra, stats, waiver};
+
+    let Some(conn) = open_copy() else {
+        println!("실제 자료가 없어 건너뜁니다.");
+        return;
+    };
+
+    // ---------- 종일 결근을 하나 고른다 ----------
+    let found: Option<(String, i64, String)> = conn
+        .query_row(
+            "SELECT a.date, a.teacher_id, t.name
+               FROM absences a JOIN teachers t ON t.id = a.teacher_id
+              WHERE a.status = 'ACTIVE' AND a.is_all_day = 1
+              ORDER BY a.date DESC LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .optional()
+        .unwrap();
+    let Some((date, teacher_id, name)) = found else {
+        println!("종일 결근 기록이 없어 건너뜁니다.");
+        return;
+    };
+
+    let look = |conn: &rusqlite::Connection| {
+        stats::view(
+            conn,
+            &stats::StatsQuery {
+                preset: Some(crate::domain::period::CUSTOM.into()),
+                from: Some(date.clone()),
+                to: Some(date.clone()),
+            },
+        )
+        .unwrap()
+        .summary
+    };
+
+    let plan = ra::day_plan(&conn, &date, teacher_id).unwrap();
+    let before = look(&conn);
+    println!(
+        "\n=== {date} · {name} 선생님 종일 결근 ===\n  보결 필요 {} · 배정 {} · 미배정 {} · 보결 불필요 {}",
+        before.required, before.covered, before.unassigned, before.not_required
+    );
+    for x in &plan.slots {
+        println!(
+            "    {:<6} {:<8} {}",
+            x.slot_label,
+            x.class_label,
+            match (&x.existing_sub_name, &x.waiver) {
+                (Some(n), _) => format!("배정됨 ({n})"),
+                (None, Some(w)) => format!("보결 불필요 ({})", w.reason_label),
+                (None, None) => format!("미배정 · 후보 {}명", x.candidates.len()),
+            }
+        );
+    }
+
+    // ---------- 아직 아무도 배정하지 않은 칸을 고른다 ----------
+    let Some(target) = plan
+        .slots
+        .iter()
+        .find(|x| x.existing_sub_id.is_none() && x.waiver.is_none() && !x.candidates.is_empty())
+        .cloned()
+    else {
+        println!("손댈 수 있는 빈 칸이 없어 건너뜁니다.");
+        return;
+    };
+    println!("\n  고른 칸: {} {}", target.class_label, target.slot_label);
+
+    // ---------- 1) 보결 불필요 ----------
+    let id = waiver::waive(
+        &conn,
+        &waiver::WaiverInput {
+            date: date.clone(),
+            class_id: target.class_id,
+            slot_type: target.slot_type.clone(),
+            period_no: target.period_no,
+            absent_teacher_id: teacher_id,
+            reason_code: waiver::REASON_SPECIAL_CHANGED.into(),
+            note: None,
+        },
+    )
+    .unwrap();
+
+    let after = look(&conn);
+    assert_eq!(after.required, before.required, "필요했던 칸 수는 그대로다");
+    assert_eq!(after.covered, before.covered, "배정 수는 그대로다");
+    assert_eq!(
+        after.unassigned,
+        before.unassigned - 1,
+        "미배정이 하나 줄어야 한다"
+    );
+    assert_eq!(after.not_required, before.not_required + 1);
+    println!(
+        "  ok   보결 불필요 → 미배정 {} → {} · 보결 불필요 {}",
+        before.unassigned, after.unassigned, after.not_required
+    );
+
+    // 미배정 목록에서도 빠진다
+    let v = stats::view(
+        &conn,
+        &stats::StatsQuery {
+            preset: Some(crate::domain::period::CUSTOM.into()),
+            from: Some(date.clone()),
+            to: Some(date.clone()),
+        },
+    )
+    .unwrap();
+    assert!(
+        !v.open_slots
+            .iter()
+            .any(|o| o.class_id == target.class_id && o.start_min == target.start_min),
+        "미배정 목록에 남아 있다"
+    );
+    println!("  ok   미배정 목록에서도 빠졌다");
+
+    // 결근 기록은 그대로
+    let still: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM absences WHERE status = 'ACTIVE' AND date = ?1 AND teacher_id = ?2",
+            rusqlite::params![date, teacher_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(still, 1, "결근 기록이 사라지면 안 된다");
+    println!("  ok   결근 기록 그대로");
+
+    // 그 칸에는 저장이 막힌다
+    let picked = target.candidates[0].teacher_id;
+    let e = ra::assign_one(
+        &conn,
+        &ra::AssignInput {
+            date: date.clone(),
+            class_id: target.class_id,
+            slot_type: target.slot_type.clone(),
+            period_no: target.period_no,
+            absent_teacher_id: Some(teacher_id),
+            sub_teacher_id: picked,
+            absence_id: None,
+            reason_code: None,
+            reason_text: None,
+        },
+    )
+    .unwrap_err();
+    assert_eq!(e.code, "NOT_REQUIRED", "{}", e.user_message);
+    println!("  ok   오래된 화면에서 저장하려 해도 막힌다");
+
+    // ---------- 2) 되돌리기 ----------
+    waiver::revoke(&conn, id).unwrap();
+    let back = look(&conn);
+    assert_eq!(back.unassigned, before.unassigned, "미배정이 돌아와야 한다");
+    assert_eq!(back.not_required, before.not_required);
+    println!("  ok   되돌리기 → 미배정 {}", back.unassigned);
+
+    // ---------- 3) 실제 배정 ----------
+    let saved = ra::assign_one(
+        &conn,
+        &ra::AssignInput {
+            date: date.clone(),
+            class_id: target.class_id,
+            slot_type: target.slot_type.clone(),
+            period_no: target.period_no,
+            absent_teacher_id: Some(teacher_id),
+            sub_teacher_id: picked,
+            absence_id: None,
+            reason_code: None,
+            reason_text: None,
+        },
+    )
+    .unwrap();
+    let done = look(&conn);
+    assert_eq!(done.covered, before.covered + 1);
+    assert_eq!(done.unassigned, before.unassigned - 1);
+    assert_eq!(done.not_required, before.not_required);
+    println!(
+        "  ok   {} 선생님 배정 → 배정 {} · 미배정 {}",
+        saved.sub_teacher_name, done.covered, done.unassigned
+    );
+
+    // ---------- 4) 이미 배정된 칸은 먼저 취소해야 한다 ----------
+    let e = waiver::waive(
+        &conn,
+        &waiver::WaiverInput {
+            date: date.clone(),
+            class_id: target.class_id,
+            slot_type: target.slot_type.clone(),
+            period_no: target.period_no,
+            absent_teacher_id: teacher_id,
+            reason_code: waiver::REASON_SPECIAL_CHANGED.into(),
+            note: None,
+        },
+    )
+    .unwrap_err();
+    assert!(
+        e.user_message.contains("먼저 배정을 취소"),
+        "{}",
+        e.user_message
+    );
+    println!("  ok   이미 배정된 칸은 먼저 취소하라고 알린다");
+
+    // 기록은 둘 다 남아 있다
+    let waivers: i64 = conn
+        .query_row("SELECT COUNT(*) FROM substitution_waivers", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(waivers, 1, "되돌린 기록이 남아 있어야 한다");
+    let status: String = conn
+        .query_row(
+            "SELECT status FROM substitution_waivers WHERE id = ?1",
+            rusqlite::params![id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(status, waiver::STATUS_REVOKED);
+    println!("  ok   보결 불필요 기록 1건 (되돌림) · 배정 기록 {} 그대로", saved.id);
+}
+
+/// 마이그레이션 직전에 자동 백업이 남는지.
+#[test]
+#[ignore = "실제 자료가 있는 컴퓨터에서만 의미가 있다"]
+fn real_db_마이그레이션_자동_백업() {
+    let Some(src) = live_db_path() else {
+        println!("실제 자료가 없어 건너뜁니다.");
+        return;
+    };
+    let dir = std::env::temp_dir().join(format!(
+        "bogyeol-backup-check-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let dst = dir.join("bogyeol.db");
+
+    let live = Connection::open_with_flags(
+        &src,
+        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_URI,
+    )
+    .unwrap();
+    let mut copy = Connection::open(&dst).unwrap();
+    {
+        let backup = rusqlite::backup::Backup::new(&live, &mut copy).unwrap();
+        backup
+            .run_to_completion(200, std::time::Duration::ZERO, None)
+            .unwrap();
+    }
+
+    let was = crate::db::migrate::current_version(&copy).unwrap();
+    assert!(was > 0 && was < crate::db::migrate::latest_version(), "올릴 것이 있어야 한다");
+    crate::db::migrate::run(&mut copy, &dst).unwrap();
+
+    let backups = dir.join("backups");
+    let files: Vec<String> = std::fs::read_dir(&backups)
+        .expect("backups 폴더가 생겨야 한다")
+        .filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().to_string()))
+        .collect();
+    assert_eq!(files.len(), 1, "자동 백업이 하나 남아야 한다: {files:?}");
+    assert!(files[0].starts_with(&format!("bogyeol-v{was}-")), "{:?}", files[0]);
+
+    // 백업 파일이 실제로 **올리기 전** 자료다
+    let old = Connection::open(backups.join(&files[0])).unwrap();
+    assert_eq!(crate::db::migrate::current_version(&old).unwrap(), was);
+    println!(
+        "  ok   v{was} → v{} 올리기 직전에 {} 를 남긴다",
+        crate::db::migrate::latest_version(),
+        files[0]
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

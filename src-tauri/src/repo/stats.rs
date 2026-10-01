@@ -59,8 +59,11 @@ pub struct Summary {
     /// 기간 안의 배정 건수 전체.
     /// 결근을 등록하지 않고 바로 배정한 건도 들어가므로 covered 보다 클 수 있다.
     pub assigned: i32,
-    /// 필요하지만 아직 배정하지 않은 시간 수
+    /// 필요하지만 아직 배정하지 않은 시간 수.
+    /// **보결 불필요로 처리한 칸은 여기 들어가지 않는다.**
     pub unassigned: i32,
+    /// 일정이 바뀌어 보결하지 않기로 한 시간 수
+    pub not_required: i32,
     pub cancelled: i32,
     /// 보결을 맡은 선생님 수
     pub sub_teachers: i32,
@@ -107,6 +110,8 @@ pub struct AbsenceStat {
     pub required: i32,
     pub assigned: i32,
     pub unassigned: i32,
+    /// 일정이 바뀌어 보결하지 않기로 한 시간 수
+    pub not_required: i32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -120,6 +125,8 @@ pub struct DayStat {
     pub required: i32,
     pub assigned: i32,
     pub unassigned: i32,
+    /// 일정이 바뀌어 보결하지 않기로 한 시간 수
+    pub not_required: i32,
     pub cancelled: i32,
 }
 
@@ -218,6 +225,9 @@ struct Need {
     absent_teacher_id: i64,
     absent_teacher_name: String,
     assigned: bool,
+    /// 일정이 바뀌어 사람을 넣지 않아도 되는 칸으로 처리해 두었는가.
+    /// **미배정으로 세지 않는다.**
+    waived: bool,
 }
 
 /// 결근이 등록된 날만 하루치 자료를 읽어 필요한 시간을 뽑는다.
@@ -275,7 +285,10 @@ fn needs_in(conn: &Connection, dates: &[String]) -> AppResult<Vec<Need>> {
         }
     }
 
-    // 3) 결근이 있는 날만 하루치 자료를 읽는다
+    // 3) 보결 불필요로 처리해 둔 칸
+    let waived = crate::repo::waiver::active_slots_in(conn, dates)?;
+
+    // 4) 결근이 있는 날만 하루치 자료를 읽는다
     let mut out: Vec<Need> = Vec::new();
     let mut cache_date = String::new();
     let mut snap = None;
@@ -303,6 +316,7 @@ fn needs_in(conn: &Connection, dates: &[String]) -> AppResult<Vec<Need>> {
                 absent_teacher_id: teacher_id,
                 absent_teacher_name: name.clone(),
                 assigned: booked.contains(&(date.clone(), d.class_id, d.start_min)),
+                waived: waived.contains(&(date.clone(), d.class_id, d.start_min)),
             });
         }
     }
@@ -498,9 +512,12 @@ pub fn view(conn: &Connection, q: &StatsQuery) -> AppResult<StatsView> {
         |r| Ok((r.get(0)?, r.get(1)?)),
     )?;
 
+    // 보결 불필요는 '필요했던 칸'이지만 더 이상 처리할 일이 아니다.
+    // 배정으로도, 미배정으로도 세지 않고 따로 센다.
     let required = needs.len() as i32;
     let covered = needs.iter().filter(|n| n.assigned).count() as i32;
-    let unassigned = required - covered;
+    let not_required = needs.iter().filter(|n| !n.assigned && n.waived).count() as i32;
+    let unassigned = required - covered - not_required;
 
     let summary = Summary {
         absent_teachers,
@@ -509,6 +526,7 @@ pub fn view(conn: &Connection, q: &StatsQuery) -> AppResult<StatsView> {
         covered,
         assigned,
         unassigned,
+        not_required,
         cancelled,
         sub_teachers,
     };
@@ -522,7 +540,7 @@ pub fn view(conn: &Connection, q: &StatsQuery) -> AppResult<StatsView> {
     // ---------- 미배정 목록 ----------
     let mut open_slots: Vec<OpenSlot> = needs
         .iter()
-        .filter(|n| !n.assigned)
+        .filter(|n| !n.assigned && !n.waived)
         .map(|n| OpenSlot {
             date: n.date.clone(),
             day_of_week: n.day_of_week,
@@ -682,7 +700,8 @@ fn absence_stats(
                     .join(" · "),
                 required: mine.len() as i32,
                 assigned: mine.iter().filter(|n| n.assigned).count() as i32,
-                unassigned: mine.iter().filter(|n| !n.assigned).count() as i32,
+                unassigned: mine.iter().filter(|n| !n.assigned && !n.waived).count() as i32,
+                not_required: mine.iter().filter(|n| !n.assigned && n.waived).count() as i32,
             }
         })
         .collect())
@@ -741,7 +760,8 @@ fn day_stats(conn: &Connection, dates: &[String], needs: &[Need]) -> AppResult<V
                 absent_names: names.join(", "),
                 required: mine.len() as i32,
                 assigned,
-                unassigned: mine.iter().filter(|n| !n.assigned).count() as i32,
+                unassigned: mine.iter().filter(|n| !n.assigned && !n.waived).count() as i32,
+                not_required: mine.iter().filter(|n| !n.assigned && n.waived).count() as i32,
                 cancelled,
             }
         })

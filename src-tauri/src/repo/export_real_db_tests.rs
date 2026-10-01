@@ -51,6 +51,8 @@ fn open_copy() -> Option<Connection> {
         backup.run_to_completion(200, std::time::Duration::ZERO, None).ok()?;
     }
     copy.pragma_update(None, "foreign_keys", "ON").ok()?;
+    // 앱이 열 때와 같게 최신 구조로 올린다 (복사본에만).
+    crate::db::migrate::run(&mut copy, &dst).ok()?;
     Some(copy)
 }
 

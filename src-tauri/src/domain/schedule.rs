@@ -155,6 +155,11 @@ pub struct DaySnapshot {
     pub meal_default: Option<Interval>,
     /// 전담교사 × 이 요일에 직접 지정한 식사시간
     pub meal_overrides: HashMap<i64, Interval>,
+    /// 이 날 **보결 불필요**로 처리해 둔 칸.     ///
+    /// 일정이 바뀌어 사람을 넣을 필요가 없어진 칸이다. 후보를 거르는 일과는
+    /// 상관이 없고 — 그 시간에 누가 비는지는 달라지지 않는다 — 저장할 때
+    /// 막는 데 쓴다.
+    pub waived_slots: HashSet<(i64, i32)>,
 }
 
 // ============================================================

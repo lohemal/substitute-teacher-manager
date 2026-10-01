@@ -790,12 +790,25 @@ pub fn find_candidates(
         ));
     }
 
-    let notice = build_notice(
-        &slot.in_charge,
-        &slot.class_label,
-        &slot.slot_label,
-        req.absent_teacher_id,
-    );
+    // 보결 불필요로 처리해 둔 칸이면 그것부터 알린다. 다건 배정 화면과
+    // 같은 사실을 보아야 두 화면이 어긋나지 않는다.
+    let notice = if snap.waived_slots.contains(&(slot.class_id, slot.start_min)) {
+        Some(SlotNotice {
+            kind: "WAIVED".to_string(),
+            title: "보결 불필요로 처리된 시간입니다.".to_string(),
+            body: format!(
+                "{} {}는 일정이 바뀌어 보결하지 않기로 해 둔 시간입니다.                  지금 배정하면 저장되지 않습니다. 배정하시려면 다건 배정 화면에서                  [보결 필요로 되돌리기]를 먼저 눌러 주세요.",
+                slot.class_label, slot.slot_label
+            ),
+        })
+    } else {
+        build_notice(
+            &slot.in_charge,
+            &slot.class_label,
+            &slot.slot_label,
+            req.absent_teacher_id,
+        )
+    };
 
     Ok(FindResult {
         slot,
