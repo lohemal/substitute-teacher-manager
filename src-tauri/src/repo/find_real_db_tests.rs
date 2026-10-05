@@ -1944,3 +1944,190 @@ fn real_db_마이그레이션_자동_백업() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+
+// ============================================================
+//  보결 수당 '이번 학기' (v0.1.12)
+// ============================================================
+
+/// 실제 학교 자료로, **'이번 학기' 가 계산 방식이 아니라 날짜 preset** 임을
+/// 보인다.
+///
+/// 같은 학기의 시작일·종료일을 '기간 지정' 으로 직접 넣었을 때와 모든
+/// 숫자가 한 글자도 다르지 않아야 한다 — 교사별 상세까지.
+#[test]
+#[ignore = "실제 자료가 있는 컴퓨터에서만 의미가 있다"]
+fn real_db_수당_이번_학기() {
+    use rusqlite::OptionalExtension;
+
+    use crate::repo::pay::{self, PayQuery, MODE_CUSTOM, MODE_TERM};
+
+    let Some(conn) = open_copy() else {
+        println!("실제 자료가 없어 건너뜁니다.");
+        return;
+    };
+
+    // ---------- 현재 학기 ----------
+    let term: Option<(i32, i32, String, Option<String>, Option<String>)> = conn
+        .query_row(
+            "SELECT school_year, semester, name, start_date, end_date
+               FROM terms WHERE is_current = 1 LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+        )
+        .optional()
+        .unwrap();
+    let Some((year, sem, name, start, end)) = term else {
+        println!("현재 학기가 없어 건너뜁니다.");
+        return;
+    };
+    println!("\n=== 현재 학기 ===");
+    println!("  학년도 {year} · {sem}학기 · {name}");
+    println!(
+        "  start_date {}  ·  end_date {}",
+        start.clone().unwrap_or_else(|| "(비어 있음)".into()),
+        end.clone().unwrap_or_else(|| "(비어 있음)".into())
+    );
+
+    // ---------- 이번 학기로 조회 ----------
+    let t = pay::view(
+        &conn,
+        &PayQuery {
+            mode: Some(MODE_TERM.into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!(!t.term_missing, "현재 학기가 있으므로 찾아야 한다");
+    assert_eq!(t.term_label.as_deref(), Some(name.as_str()));
+    println!("\n=== 이번 학기 ===");
+    println!("  조회 기간  {} ~ {}", t.from, t.to);
+    println!(
+        "  지급 대상 {}명 · 표에 오른 {}명 · 보결 {}회 · 본인 발생 {}회 · 인정 {}회 · {}원",
+        t.summary.paid_teachers,
+        t.summary.listed_teachers,
+        t.summary.total_substituted,
+        t.summary.total_own_caused,
+        t.summary.total_payable,
+        crate::domain::pay::won(t.summary.total_amount)
+    );
+    for r in t.rows.iter().take(5) {
+        println!(
+            "    {:<8} 보결 {:>2} · 본인발생 {:>2} · 인정 {:>2} · {}원",
+            r.name,
+            r.substituted,
+            r.own_caused,
+            r.payable,
+            crate::domain::pay::won(r.amount)
+        );
+    }
+
+    // ---------- 같은 날짜를 기간 지정으로 ----------
+    let c = pay::view(
+        &conn,
+        &PayQuery {
+            mode: Some(MODE_CUSTOM.into()),
+            from: Some(t.from.clone()),
+            to: Some(t.to.clone()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    assert_eq!(c.mode, MODE_CUSTOM);
+    assert_eq!((c.from.as_str(), c.to.as_str()), (t.from.as_str(), t.to.as_str()));
+    assert_eq!(t.summary.paid_teachers, c.summary.paid_teachers, "지급 대상 교사 수");
+    assert_eq!(t.summary.listed_teachers, c.summary.listed_teachers, "표에 오른 교사 수");
+    assert_eq!(t.summary.total_substituted, c.summary.total_substituted, "보결 횟수");
+    assert_eq!(t.summary.total_own_caused, c.summary.total_own_caused, "본인 발생");
+    assert_eq!(t.summary.total_payable, c.summary.total_payable, "인정 횟수");
+    assert_eq!(t.summary.total_amount, c.summary.total_amount, "총 지급액");
+    assert_eq!(t.rows.len(), c.rows.len(), "교사 수");
+    for (a, b) in t.rows.iter().zip(c.rows.iter()) {
+        assert_eq!(a.teacher_id, b.teacher_id, "교사 순서");
+        assert_eq!(a.substituted, b.substituted, "{} 보결 횟수", a.name);
+        assert_eq!(a.own_caused, b.own_caused, "{} 본인 발생", a.name);
+        assert_eq!(a.payable, b.payable, "{} 인정 횟수", a.name);
+        assert_eq!(a.amount, b.amount, "{} 지급액", a.name);
+        assert_eq!(a.per_case, b.per_case, "{} 1회 금액", a.name);
+    }
+    println!("\n  ok   같은 날짜의 '기간 지정' 과 모든 숫자가 같다 (교사 {}명)", t.rows.len());
+
+    // 교사별 상세까지
+    for r in &t.rows {
+        let dt = pay::detail(
+            &conn,
+            r.teacher_id,
+            &PayQuery {
+                mode: Some(MODE_TERM.into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let dc = pay::detail(
+            &conn,
+            r.teacher_id,
+            &PayQuery {
+                mode: Some(MODE_CUSTOM.into()),
+                from: Some(t.from.clone()),
+                to: Some(t.to.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(dt.from, dc.from, "{} 상세 시작일", r.name);
+        assert_eq!(dt.to, dc.to, "{} 상세 종료일", r.name);
+        assert_eq!(dt.substituted.len(), dc.substituted.len(), "{} 상세 보결 건수", r.name);
+        assert_eq!(dt.own_caused.len(), dc.own_caused.len(), "{} 상세 본인 발생", r.name);
+        assert_eq!(dt.payable, dc.payable, "{} 상세 인정 횟수", r.name);
+        assert_eq!(dt.amount, dc.amount, "{} 상세 지급액", r.name);
+        assert_eq!(dt.steps, dc.steps, "{} 계산 설명", r.name);
+
+        // 요약과 상세가 어긋나지 않는다
+        assert_eq!(r.substituted as usize, dt.substituted.len(), "{} 요약 vs 상세", r.name);
+        assert_eq!(r.payable, dt.payable, "{} 요약 vs 상세 인정", r.name);
+        assert_eq!(r.amount, dt.amount, "{} 요약 vs 상세 금액", r.name);
+    }
+    println!("  ok   교사별 상세도 모두 같고, 요약과도 어긋나지 않는다");
+
+    // ---------- 월별은 그대로 ----------
+    let ym = t.from.get(0..7).unwrap_or("2026-09").to_string();
+    let m = pay::view(
+        &conn,
+        &PayQuery {
+            mode: Some(pay::MODE_MONTH.into()),
+            month: Some(ym.clone()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(m.mode, pay::MODE_MONTH);
+    assert_eq!(m.from, format!("{ym}-01"));
+    assert!(
+        m.summary.total_substituted <= t.summary.total_substituted,
+        "한 달은 학기 전체보다 많을 수 없다"
+    );
+    println!(
+        "  ok   월별 {} 은 보결 {}회 (학기 전체 {}회 가운데)",
+        ym, m.summary.total_substituted, t.summary.total_substituted
+    );
+
+    // ---------- 엑셀 조회 조건 ----------
+    let sheets = pay::sheets(
+        &conn,
+        &PayQuery {
+            mode: Some(MODE_TERM.into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let cond = sheets.iter().find(|x| x.name == "조회 조건").unwrap();
+    for r in &cond.rows {
+        if let (crate::repo::xlsx::Cell::Text(k), crate::repo::xlsx::Cell::Text(v)) = (&r[0], &r[1])
+        {
+            if matches!(k.as_str(), "조회 방식" | "학기" | "조회 기간") {
+                println!("  엑셀 조회 조건  {k:<10} {v}");
+            }
+        }
+    }
+}

@@ -8,7 +8,6 @@ import { ExportButton } from '@/features/admin/ExportButton'
 import { adminApi } from '@/ipc/admin'
 import { errorMessage } from '@/ipc/invoke'
 import { payApi, won, type PayMode, type PayQuery, type PayRow } from '@/ipc/pay'
-import { useRemembered } from '@/lib/remember'
 import { PayDetailModal } from './PayDetailModal'
 import s from './PayPanel.module.css'
 
@@ -24,8 +23,15 @@ function todayStr(): string {
 }
 
 const MODE_LABEL: Record<PayMode, string> = {
+  TERM: '이번 학기',
   MONTH: '월별',
   CUSTOM: '기간 지정',
+}
+
+/** 2026-09-01 -> 2026.09.01. */
+function dotted(ymd: string): string {
+  const [y, m, d] = ymd.split('-')
+  return y && m && d ? `${y}.${m}.${d}.` : ymd
 }
 
 /**
@@ -45,15 +51,22 @@ const MODE_LABEL: Record<PayMode, string> = {
 export function PayPanel() {
   const navigate = useNavigate()
 
-  // 월별이 기본. 마지막에 고른 방식으로 열어 준다.
-  const [mode, setMode] = useRemembered<PayMode>('pay.mode', 'MONTH')
+  // **이번 학기가 기본이다.** 학교에서 수당을 정산할 때 보는 것은 대개
+  // 학기 전체라, 메뉴를 열 때마다 달을 고르지 않아도 되게 했다.
+  //
+  // 마지막에 고른 방식을 기억하지 않는다 — 기억하면 한 번 월별을 본 사람은
+  // 그다음부터 늘 월별로 열리게 되어, '들어오면 이번 학기' 라는 약속이
+  // 깨진다. 모드를 바꾸는 것은 누르면 끝이라 번거롭지 않다.
+  const [mode, setMode] = useState<PayMode>('TERM')
   const [month, setMonth] = useState(thisMonth)
   const [from, setFrom] = useState(todayStr)
   const [to, setTo] = useState(todayStr)
   const [openId, setOpenId] = useState<number | null>(null)
 
+  // 학기 날짜는 보내지 않는다 — Rust 쪽이 현재 학기를 보고 정한다.
+  // 화면에 날짜를 베껴 두면 학기를 바꿨을 때 어긋난다.
   const query: PayQuery =
-    mode === 'CUSTOM' ? { mode, from, to } : { mode, month }
+    mode === 'CUSTOM' ? { mode, from, to } : mode === 'TERM' ? { mode } : { mode, month }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['pay', query],
@@ -67,7 +80,7 @@ export function PayPanel() {
       {/* ---------- 기간 ---------- */}
       <section className={s.periodBar}>
         <div className={s.segment}>
-          {(['MONTH', 'CUSTOM'] as PayMode[]).map((k) => (
+          {(['TERM', 'MONTH', 'CUSTOM'] as PayMode[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -79,7 +92,20 @@ export function PayPanel() {
           ))}
         </div>
 
-        {mode === 'MONTH' ? (
+        {mode === 'TERM' ? (
+          <div className={s.termNow}>
+            {data?.termMissing ? (
+              <span className={s.termNone}>학기 정보 없음</span>
+            ) : data ? (
+              <>
+                <span className={s.termName}>{data.termLabel ?? data.rangeLabel}</span>
+                <span className={`${s.termDates} num`}>
+                  {dotted(data.from)} ~ {dotted(data.to)}
+                </span>
+              </>
+            ) : null}
+          </div>
+        ) : mode === 'MONTH' ? (
           <>
             <div className={s.monthNav}>
               <button
@@ -166,6 +192,19 @@ export function PayPanel() {
                 <p>
                   횟수는 그대로 세지만 지급액이 모두 0원으로 나옵니다.{' '}
                   <b>설정 → 보결 수당</b> 에서 학교가 정한 금액을 넣어 주세요.
+                </p>
+              </div>
+            </Notice>
+          )}
+
+          {data.termMissing && (
+            <Notice tone="warn">
+              <div>
+                <strong>현재 학기 정보를 확인할 수 없습니다.</strong>
+                <p>
+                  이번 학기로 계산하려면 학기의 시작일과 종료일이 있어야 합니다.{' '}
+                  <b>설정 → 학기</b> 에서 확인해 주세요. 그 동안에는 위에서{' '}
+                  <b>월별</b> 이나 <b>기간 지정</b> 으로 조회할 수 있습니다.
                 </p>
               </div>
             </Notice>

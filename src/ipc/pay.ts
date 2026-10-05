@@ -3,9 +3,10 @@ import { invoke } from './invoke'
 /** 지급 기준 정책 코드. 새 정책은 Rust 쪽 `domain::pay` 에만 추가한다. */
 export type PayPolicy = 'ALL_ASSIGNED' | 'DEDUCT_OWN_CAUSED'
 
-export type PayMode = 'MONTH' | 'CUSTOM'
+export type PayMode = 'TERM' | 'MONTH' | 'CUSTOM'
 
 export interface PayQuery {
+  /** 비어 있으면 Rust 쪽에서 'TERM'(이번 학기)으로 본다 */
   mode?: PayMode
   /** mode='MONTH' 일 때 'YYYY-MM' */
   month?: string | null
@@ -59,6 +60,10 @@ export interface PayView {
   rows: PayRow[]
   /** 고른 기간이 지금 학기를 벗어났을 때의 안내 */
   termNote: string | null
+  /** 지금 학기 이름 ('2026학년도 2학기') */
+  termLabel: string | null
+  /** 지금 학기를 찾지 못했다 — 날짜를 넘겨짚지 않고 화면에서 알린다 */
+  termMissing: boolean
 }
 
 export interface PayCase {

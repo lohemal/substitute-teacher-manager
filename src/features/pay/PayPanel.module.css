@@ -507,3 +507,33 @@
   line-height: var(--lh-base);
   color: var(--text-muted);
 }
+
+/* ---------- 이번 학기 ---------- */
+/*
+ * 고르는 칸이 아니라 **지금 보고 있는 기간을 알려 주는 자리**다.
+ * 월별의 달 옮기기 자리와 같은 높이에 두되, 테두리 없이 글자로만 둔다.
+ */
+
+.termNow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 0 2px;
+}
+
+.termName {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.termDates {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.termNone {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}

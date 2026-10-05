@@ -33,6 +33,11 @@ use crate::domain::pay::{self, Case, Tally};
 use crate::domain::period::{self, Range, TermInfo};
 use crate::error::AppResult;
 
+/// 이번 학기. **기본 조회 모드다.**
+///
+/// 학기 날짜를 여기에 적어 두지 않는다 — `terms` 의 현재 학기를 그대로
+/// 쓴다. 학기를 바꾸면 다음 조회부터 곧바로 따라온다.
+pub const MODE_TERM: &str = "TERM";
 pub const MODE_MONTH: &str = "MONTH";
 pub const MODE_CUSTOM: &str = "CUSTOM";
 
@@ -43,7 +48,7 @@ pub const MODE_CUSTOM: &str = "CUSTOM";
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PayQuery {
-    /// MONTH | CUSTOM. 기본은 월별.
+    /// TERM | MONTH | CUSTOM. 비어 있으면 **이번 학기**.
     #[serde(default)]
     pub mode: Option<String>,
     /// mode=MONTH 일 때 'YYYY-MM'. 없으면 이번 달.
@@ -95,7 +100,7 @@ pub struct PaySummary {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PayView {
-    /// MONTH | CUSTOM
+    /// TERM | MONTH | CUSTOM
     pub mode: String,
     /// 'YYYY-MM' — 이전/다음 달 버튼이 쓴다
     pub month: String,
@@ -117,6 +122,11 @@ pub struct PayView {
 
     /// 고른 기간이 지금 학기 밖으로 나갔을 때의 안내. 막지는 않는다.
     pub term_note: Option<String>,
+
+    /// 지금 학기 이름 ('2026학년도 2학기'). 없으면 `None`
+    pub term_label: Option<String>,
+    /// 지금 학기를 찾지 못했다. **날짜를 넘겨짚지 않고** 화면에서 알린다.
+    pub term_missing: bool,
 }
 
 /// 상세에 보여 줄 보결 한 건.
@@ -192,10 +202,35 @@ fn current_term(conn: &Connection) -> AppResult<Option<TermInfo>> {
 
 /// 고른 기간을 실제 날짜 범위로 바꾼다.
 ///
-/// 월별이 기본이다. 잘못된 달을 받으면 이번 달로 되돌린다 — 화면이 빈 채로
-/// 멈추는 것보다 낫다 (`domain::period` 의 방침과 같다).
-pub fn resolve(q: &PayQuery) -> (String, String, Range) {
-    let mode = q.mode.as_deref().unwrap_or(MODE_MONTH);
+/// **이번 학기가 기본이다.** 학교에서 수당을 정산할 때 보는 것은 대개 학기
+/// 전체라, 메뉴를 열 때마다 달을 고르지 않아도 되게 했다.
+///
+/// 잘못된 달을 받으면 이번 달로 되돌린다 — 화면이 빈 채로 멈추는 것보다
+/// 낫다 (`domain::period` 의 방침과 같다). 다만 **학기만은 넘겨짚지
+/// 않는다.** 학기를 못 찾으면 빈 범위를 돌려주고 화면에서 알린다 — 엉뚱한
+/// 기간의 금액을 보여 주는 것이 가장 나쁘다.
+pub fn resolve(q: &PayQuery, term: Option<&TermInfo>) -> (String, String, Range) {
+    let mode = q.mode.as_deref().unwrap_or(MODE_TERM);
+
+    if mode == MODE_TERM {
+        let Some(t) = term else {
+            // 날짜를 지어내지 않는다. 빈 범위는 아무것도 세지 않는다.
+            return (
+                MODE_TERM.to_string(),
+                period::ym_of(today_local()),
+                Range {
+                    from: String::new(),
+                    to: String::new(),
+                    label: "학기 정보 없음".to_string(),
+                },
+            );
+        };
+        let range = period::resolve(period::TERM, today_local(), Some(t), (None, None));
+        // '달 옮기기' 단추가 기준으로 삼을 달은 있어야 한다
+        let month = range.from.get(0..7).unwrap_or_default().to_string();
+        return (MODE_TERM.to_string(), month, range);
+    }
+
     if mode == MODE_CUSTOM {
         let range = period::resolve(
             period::CUSTOM,
@@ -363,7 +398,8 @@ fn duty_text(conn: &Connection) -> AppResult<HashMap<i64, String>> {
 // ============================================================
 
 pub fn view(conn: &Connection, q: &PayQuery) -> AppResult<PayView> {
-    let (mode, month, range) = resolve(q);
+    let term = current_term(conn)?;
+    let (mode, month, range) = resolve(q, term.as_ref());
     let cfg = settings::pay_config(conn)?;
     let rule = pay::rule_of(&cfg.policy);
 
@@ -418,9 +454,18 @@ pub fn view(conn: &Connection, q: &PayQuery) -> AppResult<PayView> {
             .then(a.name.cmp(&b.name))
     });
 
-    let term = current_term(conn)?;
+    let term_missing = mode == MODE_TERM && term.is_none();
 
     Ok(PayView {
+        // 이번 학기인데 학기를 못 찾았으면 '기간을 벗어났다'는 안내는 뜻이
+        // 없다. 그쪽은 학기가 있을 때 기간을 견주는 말이다.
+        term_note: if term_missing {
+            None
+        } else {
+            term_note(term.as_ref(), &range)
+        },
+        term_label: term.as_ref().map(|t| t.name.clone()),
+        term_missing,
         mode,
         prev_month: period::shift_month(&month, -1).unwrap_or_else(|| month.clone()),
         next_month: period::shift_month(&month, 1).unwrap_or_else(|| month.clone()),
@@ -435,7 +480,6 @@ pub fn view(conn: &Connection, q: &PayQuery) -> AppResult<PayView> {
         per_case_unset: cfg.per_case <= 0,
         summary: sum,
         rows,
-        term_note: term_note(term.as_ref(), &range),
     })
 }
 
@@ -492,7 +536,7 @@ fn case_rows(
 }
 
 pub fn detail(conn: &Connection, teacher_id: i64, q: &PayQuery) -> AppResult<PayDetail> {
-    let (_, _, range) = resolve(q);
+    let (_, _, range) = resolve(q, current_term(conn)?.as_ref());
     let cfg = settings::pay_config(conn)?;
     let rule = pay::rule_of(&cfg.policy);
 
@@ -594,8 +638,17 @@ pub fn sheets(conn: &Connection, q: &PayQuery) -> AppResult<Vec<Sheet>> {
         Cell::Money(v.summary.total_amount),
     ]);
 
-    let cond = super::export::conditions(&[
-        ("기간", format!("{} ~ {}", v.from, v.to)),
+    let mut cond_rows: Vec<(&str, String)> = vec![
+        ("조회 방식", mode_label(&v.mode).to_string()),
+    ];
+    // 이번 학기로 뽑았으면 어느 학기인지까지 적어 둔다
+    if v.mode == MODE_TERM {
+        if let Some(t) = &v.term_label {
+            cond_rows.push(("학기", t.clone()));
+        }
+    }
+    cond_rows.extend([
+        ("조회 기간", format!("{} ~ {}", v.from, v.to)),
         ("기간 이름", v.range_label.clone()),
         ("지급 기준", v.policy_label.clone()),
         ("지급 기준 코드", v.policy.clone()),
@@ -603,6 +656,7 @@ pub fn sheets(conn: &Connection, q: &PayQuery) -> AppResult<Vec<Sheet>> {
         ("지급 대상 교사", format!("{}명", v.summary.paid_teachers)),
         ("총 지급액", format!("{}원", pay::won(v.summary.total_amount))),
     ]);
+    let cond = super::export::conditions(&cond_rows);
 
     Ok(vec![table, cond])
 }
@@ -610,3 +664,17 @@ pub fn sheets(conn: &Connection, q: &PayQuery) -> AppResult<Vec<Sheet>> {
 #[cfg(test)]
 #[path = "pay_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "pay_term_tests.rs"]
+mod term_tests;
+
+/// 조회 방식을 사람이 읽는 말로.
+pub fn mode_label(mode: &str) -> &'static str {
+    match mode {
+        MODE_TERM => "이번 학기",
+        MODE_MONTH => "월별",
+        MODE_CUSTOM => "기간 지정",
+        _ => "기간",
+    }
+}

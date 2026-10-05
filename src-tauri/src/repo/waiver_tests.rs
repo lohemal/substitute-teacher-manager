@@ -73,7 +73,7 @@ impl School {
         )
         .unwrap();
 
-        let mut tid = |name: &str, role: &str| {
+        let tid = |name: &str, role: &str| {
             conn.execute(
                 "INSERT INTO teachers(name, role_code) VALUES (?1, ?2)",
                 params![name, role],
