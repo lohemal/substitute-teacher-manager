@@ -693,6 +693,7 @@
 .assignCol {
   width: 68px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .assignBtn {

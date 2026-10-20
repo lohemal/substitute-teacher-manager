@@ -250,9 +250,25 @@
   color: var(--gray-600);
 }
 
+/*
+ * 작업 열.
+ *
+ * 머리글이 비어 있어서 (`<th className={s.actionCol} />`) 이 열만 최소
+ * 너비를 받쳐 줄 글자가 없다. 다른 열은 머리글이 `white-space: nowrap` 이라
+ * 그 글자 폭이 바닥이 되는데, 여기는 0 이다. 그래서 표가 좁아지면 이 열이
+ * 가장 먼저 눌린다.
+ *
+ * 한글은 **글자 사이 어디서나 줄이 바뀔 수 있다.** 그래서 '수정' 이 눌리면
+ * '수' / '정' 두 줄로 쪼개진다. 영어 'Edit' 라면 생기지 않을 일이다.
+ *
+ * 칸에 nowrap 을 주면 칸의 최소 너비가 단추 너비가 되어, 표가 이 열을 그
+ * 아래로 줄이지 못한다. 단추 너비만 늘리는 것과 달리 **열 자체가 자리를
+ * 지키므로** 옆 열을 침범하지도 않는다.
+ */
 .actionCol {
   width: 64px;
   text-align: right !important;
+  white-space: nowrap;
 }
 
 .name {
@@ -341,6 +357,8 @@
 .editBtn {
   height: 30px;
   padding: 0 11px;
+  /* 칸이 아무리 좁아져도 '수정' 은 한 줄이다 */
+  white-space: nowrap;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-btn);
   background: var(--white);

@@ -225,9 +225,12 @@
   width: 130px;
 }
 
+/* 작업 열 — 머리글이 비어 있어 최소 너비를 받쳐 줄 글자가 없다.
+   nowrap 으로 단추 너비만큼은 지키게 한다 (TeacherManager 와 같은 까닭). */
 .actCol {
   width: 68px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .day {
@@ -293,6 +296,8 @@
 
 .cancelBtn {
   padding: 5px 11px;
+  /* 두 줄이 되면 단추가 높아지면서 표의 행까지 함께 늘어난다 */
+  white-space: nowrap;
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   background: var(--surface);
