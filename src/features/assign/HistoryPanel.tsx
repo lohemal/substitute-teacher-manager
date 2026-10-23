@@ -34,7 +34,10 @@ export function HistoryPanel() {
   const [from, setFrom] = useState(monthAgo)
   const [to, setTo] = useState(todayStr)
   const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<StatusPick>('ALL')
+  // 기본은 **배정**. 평소에 보는 것은 지금 살아 있는 배정이고, 취소된
+  // 기록은 확인할 일이 있을 때만 꺼내 본다. 어딘가에 적어 두지 않으므로
+  // 메뉴에 다시 들어오면 늘 '배정' 으로 시작한다.
+  const [status, setStatus] = useState<StatusPick>('ASSIGNED')
   const [cancelling, setCancelling] = useState<HistoryRow | null>(null)
 
   const filter: HistoryFilter = { from, to, keyword: keyword.trim() || null, status }
@@ -131,6 +134,7 @@ export function HistoryPanel() {
       {data && (
         <p className={s.summary}>
           <strong className="num">{rows.length}</strong>건
+          {status !== 'ALL' && <span className={s.shown}>보는 중</span>}
           <span className={s.sep}>·</span>
           배정 <strong className={`${s.ok} num`}>{data.assignedCount}</strong>
           <span className={s.sep}>/</span>

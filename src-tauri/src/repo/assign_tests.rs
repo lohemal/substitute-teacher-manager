@@ -936,6 +936,56 @@ fn 상태로_거를_수_있다() {
     assert_eq!(dead.rows.len(), 1);
 }
 
+/// 배정·취소 건수는 **상태 거르개를 따라가지 않는다.**
+///
+/// 화면의 기본 거르개가 '배정' 이 되면서 생긴 약속이다. 목록은 걸러
+/// 보여 주더라도, 요약은 '이 기간에 무엇이 있었나' 를 그대로 말해야
+/// 한다 — 그래야 취소가 있었다는 사실이 화면에서 사라지지 않는다.
+#[test]
+fn 요약_건수는_상태_거르개와_상관없이_기간_전체를_센다() {
+    let (s, hr) = basic();
+    let a = s.add_teacher("박전담", "SPECIAL");
+    let saved = s.assign(MON, s.class_id(1, 1), 1, hr[0], a).unwrap();
+    s.assign(MON, s.class_id(1, 1), 2, hr[0], a).unwrap();
+    s.assign(MON, s.class_id(1, 1), 3, hr[0], a).unwrap();
+    cancel(&s.conn, saved.id, None).unwrap();
+
+    for pick in ["ALL", "ASSIGNED", "CANCELLED"] {
+        let h = history(
+            &s.conn,
+            &HistoryFilter {
+                status: Some(pick.into()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(h.assigned_count, 2, "{pick}: 배정은 늘 2건");
+        assert_eq!(h.cancelled_count, 1, "{pick}: 취소는 늘 1건");
+    }
+
+    // 목록 자체는 거른 대로다
+    let live = history(
+        &s.conn,
+        &HistoryFilter {
+            status: Some("ASSIGNED".into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(live.rows.len(), 2, "목록에는 배정만");
+
+    // 이름으로 거르면 요약도 그 사람 것만 센다 (기간·이름은 따라간다)
+    let other = history(
+        &s.conn,
+        &HistoryFilter {
+            keyword: Some("없는이름".into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!((other.assigned_count, other.cancelled_count), (0, 0));
+}
+
 #[test]
 fn 앱을_다시_켜도_기록이_그대로_복원된다() {
     let (s, hr) = basic();

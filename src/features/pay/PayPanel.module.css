@@ -537,3 +537,53 @@
   font-size: var(--fs-sm);
   color: var(--text-muted);
 }
+
+/* ---------- 눌러서 줄 세우는 머리글 ---------- */
+/*
+ * 글자와 화살표를 한 덩어리로 가운데에 둔다. 본문은 그대로다 —
+ * 교사명은 왼쪽, 숫자·금액은 오른쪽이라야 읽기 좋다.
+ */
+
+.table th.sortTh {
+  padding: 0;
+  text-align: center;
+}
+
+.sortBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sortBtn:hover {
+  background: var(--sky-50);
+  color: var(--sky-700);
+}
+
+.sortBtn:focus-visible {
+  outline: 2px solid var(--sky-400);
+  outline-offset: -2px;
+}
+
+.sortMark {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.sortOn .sortMark {
+  color: var(--sky-500);
+}
+
+.sortOn .sortBtn {
+  color: var(--sky-700);
+}

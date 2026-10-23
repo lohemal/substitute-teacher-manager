@@ -905,8 +905,37 @@ pub fn history(conn: &Connection, f: &HistoryFilter) -> AppResult<HistoryView> {
 
     let truncated = rows.len() as i64 > limit;
     let rows: Vec<HistoryRow> = rows.into_iter().take(limit as usize).collect();
-    let assigned_count = rows.iter().filter(|r| r.status == "ASSIGNED").count() as i32;
-    let cancelled_count = rows.len() as i32 - assigned_count;
+
+    // 배정·취소 건수는 **상태 거르개와 상관없이** 그 기간 전체를 센다.
+    //
+    // 예전에는 돌려주는 목록만 세었다. 그때는 기본이 '전체' 라 눈에 띄지
+    // 않았지만, 기본이 '배정' 이 되면 취소가 늘 0 으로 보여 그 기간에 취소가
+    // 있었다는 사실이 화면에서 사라진다. 요약은 '이 기간에 무엇이 있었나'
+    // 를 말해야 하므로 거르개를 따라가지 않는다.
+    //
+    // 잘린 목록(limit)이 아니라 DB 에서 바로 세므로, 결과가 많아 일부만
+    // 보여 줄 때도 숫자가 맞는다.
+    let (assigned_count, cancelled_count): (i32, i32) = conn.query_row(
+        "SELECT SUM(CASE WHEN s.status = 'ASSIGNED'  THEN 1 ELSE 0 END),
+                SUM(CASE WHEN s.status = 'CANCELLED' THEN 1 ELSE 0 END)
+           FROM substitutions s
+           JOIN teachers ts ON ts.id = s.sub_teacher_id
+      LEFT JOIN teachers ta ON ta.id = s.absent_teacher_id
+          WHERE (?1 IS NULL OR s.date >= ?1)
+            AND (?2 IS NULL OR s.date <= ?2)
+            AND (?3 IS NULL OR ts.name LIKE ?3 OR ta.name LIKE ?3)",
+        params![
+            f.from.as_deref().filter(|s| !s.is_empty()),
+            f.to.as_deref().filter(|s| !s.is_empty()),
+            keyword,
+        ],
+        |r| {
+            Ok((
+                r.get::<_, Option<i32>>(0)?.unwrap_or(0),
+                r.get::<_, Option<i32>>(1)?.unwrap_or(0),
+            ))
+        },
+    )?;
 
     Ok(HistoryView {
         rows,

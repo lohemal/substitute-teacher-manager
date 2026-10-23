@@ -358,3 +358,11 @@
 .exportSlot {
   margin-left: auto;
 }
+
+/* 목록 건수 옆의 작은 이름표 — 걸러 보고 있을 때만 나온다.
+   그 옆의 배정·취소 숫자는 기간 전체이므로 둘을 구별해 준다. */
+.shown {
+  margin-left: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-faint);
+}

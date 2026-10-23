@@ -1921,8 +1921,25 @@ fn real_db_마이그레이션_자동_백업() {
             .unwrap();
     }
 
-    let was = crate::db::migrate::current_version(&copy).unwrap();
-    assert!(was > 0 && was < crate::db::migrate::latest_version(), "올릴 것이 있어야 한다");
+    // 실사용 자료가 이미 최신이면 올릴 것이 없다. 그때도 이 시험이 뜻을
+    // 가지도록, **복사본의** 버전을 한 단계 내려 올릴 거리를 만든다.
+    // (004 이후는 모두 다시 돌려도 결과가 같다)
+    let now = crate::db::migrate::current_version(&copy).unwrap();
+    let was = if now >= crate::db::migrate::latest_version() {
+        let back = crate::db::migrate::latest_version() - 1;
+        copy.pragma_update(None, "user_version", back).unwrap();
+        back
+    } else {
+        now
+    };
+    assert!(was > 0, "빈 자료가 아니어야 한다");
+
+    // 파일에 확실히 적힌 뒤에 올린다. 자동 백업은 **파일을 복사**하는 것이라,
+    // 바꾼 값이 아직 WAL 에만 있으면 백업에는 예전 값이 담긴다.
+    drop(copy);
+    let mut copy = Connection::open(&dst).unwrap();
+    assert_eq!(crate::db::migrate::current_version(&copy).unwrap(), was);
+
     crate::db::migrate::run(&mut copy, &dst).unwrap();
 
     let backups = dir.join("backups");

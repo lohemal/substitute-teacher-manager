@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
@@ -9,6 +9,13 @@ import { adminApi } from '@/ipc/admin'
 import { errorMessage } from '@/ipc/invoke'
 import { payApi, won, type PayMode, type PayQuery, type PayRow } from '@/ipc/pay'
 import { PayDetailModal } from './PayDetailModal'
+import {
+  paySortDir,
+  sortPayRows,
+  togglePaySort,
+  type PaySort,
+  type PaySortField,
+} from './sortPayRows'
 import s from './PayPanel.module.css'
 
 function thisMonth(): string {
@@ -63,6 +70,10 @@ export function PayPanel() {
   const [to, setTo] = useState(todayStr)
   const [openId, setOpenId] = useState<number | null>(null)
 
+  // 표를 어떻게 줄 세웠는가. 메뉴를 나갔다 들어오면 기본 순서로 시작한다
+  // — 어딘가에 적어 두지 않는다.
+  const [sort, setSort] = useState<PaySort>(null)
+
   // 학기 날짜는 보내지 않는다 — Rust 쪽이 현재 학기를 보고 정한다.
   // 화면에 날짜를 베껴 두면 학기를 바꿨을 때 어긋난다.
   const query: PayQuery =
@@ -72,6 +83,10 @@ export function PayPanel() {
     queryKey: ['pay', query],
     queryFn: () => payApi.view(query),
   })
+
+  // 서버가 준 순서를 건드리지 않고, 보여 줄 순서만 따로 만든다.
+  // 정렬을 풀면 이 줄이 원래 배열을 그대로 돌려준다.
+  const rows = useMemo(() => sortPayRows(data?.rows ?? [], sort), [data?.rows, sort])
 
   const [y, m] = month.split('-')
 
@@ -271,18 +286,54 @@ export function PayPanel() {
                 <table className={s.table}>
                   <thead>
                     <tr>
-                      <th>교사</th>
-                      <th className={s.roleCol}>구분</th>
-                      <th className={s.numCol}>보결한 횟수</th>
-                      <th className={s.numCol}>본인 발생 보결</th>
-                      <th className={s.numCol}>지급 인정 횟수</th>
-                      <th className={s.moneyCol}>1회 수당</th>
-                      <th className={s.moneyCol}>지급액</th>
+                      <SortTh field="name" label="교사" sort={sort} onSort={setSort} />
+                      <SortTh
+                        field="role"
+                        label="구분"
+                        className={s.roleCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                      <SortTh
+                        field="substituted"
+                        label="보결한 횟수"
+                        className={s.numCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                      <SortTh
+                        field="ownCaused"
+                        label="본인 발생 보결"
+                        className={s.numCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                      <SortTh
+                        field="payable"
+                        label="지급 인정 횟수"
+                        className={s.numCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                      <SortTh
+                        field="perCase"
+                        label="1회 수당"
+                        className={s.moneyCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
+                      <SortTh
+                        field="amount"
+                        label="지급액"
+                        className={s.moneyCol}
+                        sort={sort}
+                        onSort={setSort}
+                      />
                       <th className={s.actCol} />
                     </tr>
                   </thead>
                   <tbody>
-                    {data.rows.map((r) => (
+                    {rows.map((r) => (
                       <Row key={r.teacherId} r={r} onOpen={() => setOpenId(r.teacherId)} />
                     ))}
                     <tr className={s.totalRow}>
@@ -313,6 +364,51 @@ export function PayPanel() {
         </>
       )}
     </div>
+  )
+}
+
+/**
+ * 눌러서 줄 세울 수 있는 머리글.
+ *
+ * 글자와 화살표를 **한 덩어리로 가운데**에 둔다. 본문의 정렬(교사명은 왼쪽,
+ * 숫자·금액은 오른쪽)은 그대로 둔다 — 숫자는 자릿수를 맞춰 읽는 것이라
+ * 가운데로 옮기면 읽기 나빠진다.
+ *
+ * 진짜 `button` 이라 키보드로도 누를 수 있고, 읽어 주는 기계를 위해
+ * `aria-sort` 를 붙인다.
+ */
+function SortTh({
+  field,
+  label,
+  className,
+  sort,
+  onSort,
+}: {
+  field: PaySortField
+  label: string
+  className?: string
+  sort: PaySort
+  onSort: (next: PaySort) => void
+}) {
+  const dir = paySortDir(sort, field)
+  const next = dir === null ? '오름차순' : dir === 'asc' ? '내림차순' : '정렬 해제'
+  return (
+    <th
+      className={[s.sortTh, className, dir ? s.sortOn : ''].filter(Boolean).join(' ')}
+      aria-sort={dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none'}
+    >
+      <button
+        type="button"
+        className={s.sortBtn}
+        onClick={() => onSort(togglePaySort(sort, field))}
+        title={`${label} 기준으로 ${next}`}
+      >
+        <span>{label}</span>
+        <span className={s.sortMark} aria-hidden="true">
+          {dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '↕'}
+        </span>
+      </button>
+    </th>
   )
 }
 
