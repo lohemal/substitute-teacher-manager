@@ -418,7 +418,7 @@ function Row({ r, onOpen }: { r: PayRow; onOpen: () => void }) {
 
   return (
     <tr className={cls} onClick={onOpen}>
-      <td>
+      <td className={s.nameCol}>
         <span className={s.name}>{r.name}</span>
         {r.duty && <span className={s.duty}>{r.duty}</span>}
         {!r.active && <span className={s.offTag}>비활성</span>}

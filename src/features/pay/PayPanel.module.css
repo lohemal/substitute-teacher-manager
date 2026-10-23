@@ -262,6 +262,13 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-sm);
+  /*
+   * 교사 칸만 너비가 정해져 있지 않아, 창이 좁아지면 그 칸이 먼저 눌려
+   * 이름이 세 줄로 쪼개졌다. 가장 좁은 창(1100px)에서도 그랬다.
+   * 최소 너비를 두면 .tableWrap 의 가로 스크롤이 대신 움직인다 —
+   * 넉넉한 창에서는 달라지는 것이 없다.
+   */
+  min-width: 940px;
 }
 
 .table th {
@@ -295,11 +302,12 @@
 
 .numCol {
   width: 108px;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
   font-family: var(--font-num);
 }
 
+/* 금액은 자릿수를 맞춰 읽으므로 오른쪽 그대로 둔다 */
 .moneyCol {
   width: 128px;
   text-align: right;
@@ -320,6 +328,12 @@
 
 .roleCol {
   width: 150px;
+  text-align: center;
+}
+
+/* 교사 칸. 이름·담당·비활성 표시가 한 줄로 이어지므로 통째로 가운데 */
+.nameCol {
+  text-align: center;
 }
 
 .name {
